@@ -41,6 +41,9 @@ A API é inicializada em `http://localhost:<PORT>`, onde `PORT` é definido na v
 | `PORT` | Porta HTTP usada pelo servidor Express. | `4000` |
 | `API_KEY` | Chave comparada com o cabeçalho `X-API-Key`. Se estiver vazia, nenhum bloqueio é aplicado. | `super-secret-api-key` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Caminho para o arquivo JSON da Service Account que autentica o Firebase Admin SDK. | `./credentials/serviceAccount.json` |
+| `FIREBASE_SERVICE_ACCOUNT` | (Opcional) JSON completo da Service Account, útil em plataformas que armazenam segredos como string. | *vazio* |
+| `FIREBASE_SERVICE_ACCOUNT_BASE64` | (Opcional) Mesmo JSON acima, porém codificado em Base64. | *vazio* |
+| `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` | (Opcional) Campos individuais da Service Account. `FIREBASE_PRIVATE_KEY` aceita `\n` para quebras de linha. | *vazio* |
 | `DEFAULT_USER_ID` | ID usado quando o cabeçalho `X-User-Id` não é enviado. | `default-user` |
 
 ### Cabeçalhos esperados
