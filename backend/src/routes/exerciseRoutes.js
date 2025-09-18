@@ -28,13 +28,15 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const userId = getUserId(req);
-    const q = await db
-      .collection('exercises')
-      .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const snap = await db.collection('exercises').where('userId', '==', userId).get();
 
-    let items = q.docs.map(idFrom);
+    let items = snap.docs.map(idFrom);
+
+    items.sort((a, b) => {
+      const aTime = typeof a.createdAt?.toMillis === 'function' ? a.createdAt.toMillis() : 0;
+      const bTime = typeof b.createdAt?.toMillis === 'function' ? b.createdAt.toMillis() : 0;
+      return bTime - aTime;
+    });
 
     if (req.query.expand === 'class' && items.length) {
       const classIds = [...new Set(items.map((e) => e.classId).filter(Boolean))];

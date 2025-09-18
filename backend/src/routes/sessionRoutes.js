@@ -26,14 +26,32 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const userId = getUserId(req);
-    let q = db.collection('sessions').where('userId', '==', userId);
+    const snap = await db.collection('sessions').where('userId', '==', userId).get();
+    const items = snap.docs.map(idFrom);
 
     const { from, to } = req.query;
-    if (from) q = q.where('date', '>=', new Date(from).toISOString());
-    if (to) q = q.where('date', '<=', new Date(to).toISOString());
+    const parsedFrom = from ? new Date(from) : null;
+    const parsedTo = to ? new Date(to) : null;
+    const fromDate = parsedFrom && !Number.isNaN(parsedFrom.getTime()) ? parsedFrom : null;
+    const toDate = parsedTo && !Number.isNaN(parsedTo.getTime()) ? parsedTo : null;
 
-    const snap = await q.orderBy('date', 'desc').get();
-    res.json(snap.docs.map(idFrom));
+    const filtered = items.filter((session) => {
+      if (!session.date) return true;
+      const current = new Date(session.date);
+      if (Number.isNaN(current.getTime())) return true;
+      if (fromDate && current < fromDate) return false;
+      if (toDate && current > toDate) return false;
+      return true;
+    });
+
+    const getTime = (value) => {
+      const time = new Date(value).getTime();
+      return Number.isNaN(time) ? 0 : time;
+    };
+
+    filtered.sort((a, b) => getTime(b.date) - getTime(a.date));
+
+    res.json(filtered);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
