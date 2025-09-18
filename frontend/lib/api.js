@@ -1,42 +1,16 @@
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '').trim();
-const API_KEY = (process.env.NEXT_PUBLIC_API_KEY || '').trim();
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirebaseApp } from '@/lib/firebase';
+
 const DEFAULT_USER_ID = (process.env.NEXT_PUBLIC_DEFAULT_USER_ID || 'default-user').trim();
 
-function ensureBaseUrl() {
-  if (!API_BASE_URL) {
-    throw new Error(
-      'Defina NEXT_PUBLIC_API_BASE_URL apontando para a API Express que expõe os dados do Firebase.'
-    );
-  }
-}
-
-function buildHeaders() {
-  const headers = { Accept: 'application/json' };
-
-  if (API_KEY) {
-    headers['X-API-Key'] = API_KEY;
-  }
-
-  if (DEFAULT_USER_ID) {
-    headers['X-User-Id'] = DEFAULT_USER_ID;
-  }
-
-  return headers;
+function getDb() {
+  return getFirestore(getFirebaseApp());
 }
 
 function normalizeValue(value) {
   if (value === undefined || value === null) return value;
   if (typeof value.toDate === 'function') {
     return value.toDate().toISOString();
-  }
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    Object.prototype.hasOwnProperty.call(value, '_seconds') &&
-    Object.prototype.hasOwnProperty.call(value, '_nanoseconds')
-  ) {
-    const millis = value._seconds * 1000 + Math.floor(value._nanoseconds / 1_000_000);
-    return new Date(millis).toISOString();
   }
   if (value instanceof Date) {
     return value.toISOString();
@@ -53,76 +27,82 @@ function normalizeValue(value) {
 }
 
 function mapDocument(doc) {
-  return normalizeValue(doc);
+  const data = doc.data();
+  return {
+    id: doc.id,
+    ...normalizeValue(data),
+  };
 }
 
-async function request(pathname) {
-  ensureBaseUrl();
-  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`;
-  const url = new URL(pathname.replace(/^\//, ''), baseUrl);
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: buildHeaders(),
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    let message = `Falha ao buscar ${pathname}: ${response.status}`;
-    try {
-      const body = await response.json();
-      if (body?.error) {
-        message = body.error;
-      }
-    } catch (error) {
-      // Ignora erro de parse e mantém mensagem padrão
-    }
-    throw new Error(message);
+function ensureUserId() {
+  if (!DEFAULT_USER_ID) {
+    throw new Error(
+      'Defina NEXT_PUBLIC_DEFAULT_USER_ID para filtrar os dados do Firebase.'
+    );
   }
-
-  return response.json();
+  return DEFAULT_USER_ID;
 }
 
 export async function fetchExerciseClasses() {
-  const classes = await request('exercise-classes');
-  const normalized = (Array.isArray(classes) ? classes : []).map((item) => mapDocument(item));
-  normalized.sort((a, b) => {
+  const userId = ensureUserId();
+  const classesQuery = query(
+    collection(getDb(), 'exerciseClasses'),
+    where('userId', '==', userId)
+  );
+  const snapshot = await getDocs(classesQuery);
+  const classes = snapshot.docs.map(mapDocument);
+  classes.sort((a, b) => {
     const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return bTime - aTime;
   });
-  return normalized;
+  return classes;
 }
 
 export async function fetchWorkouts() {
-  const workouts = await request('workouts');
-  const normalized = (Array.isArray(workouts) ? workouts : []).map((item) => mapDocument(item));
-  normalized.sort((a, b) => {
+  const userId = ensureUserId();
+  const workoutsQuery = query(
+    collection(getDb(), 'workouts'),
+    where('userId', '==', userId)
+  );
+  const snapshot = await getDocs(workoutsQuery);
+  const workouts = snapshot.docs.map(mapDocument);
+  workouts.sort((a, b) => {
     const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return bTime - aTime;
   });
-  return normalized;
+  return workouts;
 }
 
 export async function fetchExercises() {
-  const exercises = await request('exercises');
-  const normalized = (Array.isArray(exercises) ? exercises : []).map((item) => mapDocument(item));
-  normalized.sort((a, b) => {
+  const userId = ensureUserId();
+  const exercisesQuery = query(
+    collection(getDb(), 'exercises'),
+    where('userId', '==', userId)
+  );
+  const snapshot = await getDocs(exercisesQuery);
+  const exercises = snapshot.docs.map(mapDocument);
+  exercises.sort((a, b) => {
     const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return bTime - aTime;
   });
-  return normalized;
+  return exercises;
 }
 
 export async function fetchSessions() {
-  const sessions = await request('sessions');
-  const normalized = (Array.isArray(sessions) ? sessions : []).map((item) => mapDocument(item));
-  normalized.sort((a, b) => {
+  const userId = ensureUserId();
+  const sessionsQuery = query(
+    collection(getDb(), 'sessions'),
+    where('userId', '==', userId)
+  );
+  const snapshot = await getDocs(sessionsQuery);
+  const sessions = snapshot.docs.map(mapDocument);
+  sessions.sort((a, b) => {
     const aTime = a.date ? new Date(a.date).getTime() : 0;
     const bTime = b.date ? new Date(b.date).getTime() : 0;
     return bTime - aTime;
   });
-  return normalized;
+  return sessions;
 }
