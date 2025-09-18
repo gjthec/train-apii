@@ -1,4 +1,7 @@
-.env
+# Keep credentials out of version control
 credentials/
 cesar123*
 node_modules/
+
+# Allow committing the sample environment file
+!.env
