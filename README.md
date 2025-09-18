@@ -164,7 +164,7 @@ backend/
 
 ## Frontend (Next.js)
 
-A interface web baseada em React está localizada em `./frontend` e consome a API para listar aulas, treinos, exercícios e sessões.
+A interface web baseada em React está localizada em `./frontend` e agora consulta diretamente o Firestore via SDK do Firebase para listar aulas, treinos, exercícios e sessões.
 
 ### Como executar
 
@@ -173,7 +173,7 @@ A interface web baseada em React está localizada em `./frontend` e consome a AP
    cd frontend
    npm install
    ```
-2. Copie [`frontend/.env.local.example`](frontend/.env.local.example) para `.env.local` e defina `NEXT_PUBLIC_API_BASE_URL` apontando para o backend e `NEXT_PUBLIC_API_KEY` quando necessário.
+2. Copie [`frontend/.env.local.example`](frontend/.env.local.example) para `.env.local` e ajuste as variáveis `NEXT_PUBLIC_FIREBASE_*` e `NEXT_PUBLIC_DEFAULT_USER_ID` conforme o seu projeto.
 3. Execute o servidor de desenvolvimento:
    ```bash
    npm run dev
@@ -183,9 +183,9 @@ A interface web baseada em React está localizada em `./frontend` e consome a AP
 ### Telas disponíveis
 
 - **Painel** (`/`): visão geral com atalhos para as demais telas.
-- **Aulas** (`/exercise-classes`): lista as classes retornadas pelo endpoint `/exercise-classes`.
-- **Treinos** (`/workouts`): mostra nome, foco, dificuldade e métricas dos treinos.
-- **Exercícios** (`/exercises`): apresenta detalhes de execução, grupos musculares e repetições.
-- **Sessões** (`/sessions`): exibe as sessões agendadas com status, data e aula relacionada.
+- **Aulas** (`/exercise-classes`): lista as classes encontradas na coleção `exerciseClasses`.
+- **Treinos** (`/workouts`): mostra nome, foco, dificuldade e métricas dos treinos armazenados no Firestore.
+- **Exercícios** (`/exercises`): apresenta detalhes de execução, grupos musculares e repetições de cada documento em `exercises`.
+- **Sessões** (`/sessions`): exibe as sessões agendadas com status, data e aula relacionada a partir da coleção `sessions`.
 
 Todas as telas aplicam estilos consistentes e exibem mensagens de erro amigáveis quando a API retorna falha.
