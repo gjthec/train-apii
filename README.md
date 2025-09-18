@@ -1,14 +1,31 @@
-# Train API
+# Train Platform
 
-API REST construída com Express e Firebase Firestore para gerenciar classes de exercícios, exercícios, treinos e sessões de treino.
+Monorepo que reúne a API REST construída com Express/Firebase e uma interface web Next.js para visualizar as aulas, treinos e sessões carregadas pelo backend.
 
-## Como executar
+## Estrutura
+
+```
+.
+├── backend/                # API Express conectada ao Firebase Firestore
+└── frontend/               # Aplicação Next.js que consome a API
+```
+
+Cada módulo mantém seu próprio `package.json`, scripts e arquivos de ambiente de exemplo.
+
+---
+
+## Backend (Express + Firebase)
+
+A API original foi movida para `./backend`. Todos os comandos devem ser executados dentro dessa pasta.
+
+### Como executar
 
 1. Instale as dependências:
    ```bash
+   cd backend
    npm install
    ```
-2. Configure as variáveis de ambiente conforme descrito em [`.env`](./.env).
+2. Configure as variáveis de ambiente copiando [`backend/.env`](backend/.env) e ajustando os valores.
 3. Certifique-se de que o arquivo JSON da Service Account do Firebase esteja disponível no caminho indicado por `GOOGLE_APPLICATION_CREDENTIALS`.
 4. Inicie a API:
    ```bash
@@ -17,7 +34,7 @@ API REST construída com Express e Firebase Firestore para gerenciar classes de 
 
 A API é inicializada em `http://localhost:<PORT>`, onde `PORT` é definido na variável de ambiente (por padrão 4000).
 
-## Variáveis de ambiente
+### Variáveis de ambiente
 
 | Variável | Descrição | Valor padrão |
 | --- | --- | --- |
@@ -26,21 +43,21 @@ A API é inicializada em `http://localhost:<PORT>`, onde `PORT` é definido na v
 | `GOOGLE_APPLICATION_CREDENTIALS` | Caminho para o arquivo JSON da Service Account que autentica o Firebase Admin SDK. | `./credentials/serviceAccount.json` |
 | `DEFAULT_USER_ID` | ID usado quando o cabeçalho `X-User-Id` não é enviado. | `default-user` |
 
-## Cabeçalhos esperados
+### Cabeçalhos esperados
 
 - `X-API-Key`: obrigatório quando `API_KEY` estiver configurada. Requisições sem essa chave válida retornam `401 Unauthorized`.
 - `X-User-Id`: identifica o usuário dono dos registros. Caso ausente, a API usa `DEFAULT_USER_ID`.
 
-## Endpoints
+### Endpoints
 
-### Health check
+#### Health check
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
 | `GET` | `/health` | Verifica se a API está online. |
 | `GET` | `/_debug/project` | Exibe o `projectId` carregado pelo Firebase Admin. |
 
-### Exercise classes `/exercise-classes`
+#### Exercise classes `/exercise-classes`
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
@@ -57,7 +74,7 @@ A API é inicializada em `http://localhost:<PORT>`, onde `PORT` é definido na v
 }
 ```
 
-### Exercises `/exercises`
+#### Exercises `/exercises`
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
@@ -75,7 +92,7 @@ A API é inicializada em `http://localhost:<PORT>`, onde `PORT` é definido na v
 }
 ```
 
-### Workouts `/workouts`
+#### Workouts `/workouts`
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
@@ -102,7 +119,7 @@ A API é inicializada em `http://localhost:<PORT>`, onde `PORT` é definido na v
 }
 ```
 
-### Sessions `/sessions`
+#### Sessions `/sessions`
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
@@ -121,21 +138,54 @@ A API é inicializada em `http://localhost:<PORT>`, onde `PORT` é definido na v
 }
 ```
 
-### Respostas de erro
+#### Respostas de erro
 
 - `400 Bad Request`: corpo inválido ou referências inexistentes (por exemplo, `classId` inexistente).
 - `401 Unauthorized`: cabeçalho `X-API-Key` ausente ou inválido quando a variável `API_KEY` está definida.
 - `404 Not Found`: recurso não encontrado para o ID informado.
 - `500 Internal Server Error`: falha inesperada do servidor ou do Firestore.
 
-## Estrutura do projeto
+### Estrutura da pasta `backend`
 
 ```
-src/
-├── app.js                  # Instancia o Express e monta middlewares/rotas
-├── config/firebase.js      # Inicializa Firebase Admin e exporta utilidades
-├── middlewares/apiKey.js   # Middleware de autenticação por API Key
-├── routes/                 # Rotas moduladas por recurso
-├── schemas/                # Validações Zod
-└── utils/                  # Funções auxiliares compartilhadas
+backend/
+├── package.json
+├── src/
+│   ├── app.js                  # Instancia o Express e monta middlewares/rotas
+│   ├── config/firebase.js      # Inicializa Firebase Admin e exporta utilidades
+│   ├── middlewares/apiKey.js   # Middleware de autenticação por API Key
+│   ├── routes/                 # Rotas moduladas por recurso
+│   ├── schemas/                # Validações Zod
+│   └── utils/                  # Funções auxiliares compartilhadas
+└── .env                        # Exemplo de configuração
 ```
+
+---
+
+## Frontend (Next.js)
+
+A interface web baseada em React está localizada em `./frontend` e consome a API para listar aulas, treinos, exercícios e sessões.
+
+### Como executar
+
+1. Instale as dependências:
+   ```bash
+   cd frontend
+   npm install
+   ```
+2. Copie [`frontend/.env.local.example`](frontend/.env.local.example) para `.env.local` e defina `NEXT_PUBLIC_API_BASE_URL` apontando para o backend e `NEXT_PUBLIC_API_KEY` quando necessário.
+3. Execute o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   ```
+4. Acesse `http://localhost:3000` no navegador.
+
+### Telas disponíveis
+
+- **Painel** (`/`): visão geral com atalhos para as demais telas.
+- **Aulas** (`/exercise-classes`): lista as classes retornadas pelo endpoint `/exercise-classes`.
+- **Treinos** (`/workouts`): mostra nome, foco, dificuldade e métricas dos treinos.
+- **Exercícios** (`/exercises`): apresenta detalhes de execução, grupos musculares e repetições.
+- **Sessões** (`/sessions`): exibe as sessões agendadas com status, data e aula relacionada.
+
+Todas as telas aplicam estilos consistentes e exibem mensagens de erro amigáveis quando a API retorna falha.

@@ -1,0 +1,54 @@
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cardHeader h3 {
+  font-size: 1.25rem;
+}
+
+.cardHeader p {
+  color: #4b5563;
+}
+
+.modality {
+  background: #059669;
+  color: #ffffff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.metrics div {
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.metrics dt {
+  font-weight: 600;
+  color: #111827;
+}
+
+.metrics dd {
+  color: #4b5563;
+}
