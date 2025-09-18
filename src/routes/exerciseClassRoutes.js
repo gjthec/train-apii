@@ -24,12 +24,17 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const userId = getUserId(req);
-    const q = await db
+    const snap = await db
       .collection('exerciseClasses')
       .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
       .get();
-    res.json(q.docs.map(idFrom));
+    const classes = snap.docs.map(idFrom);
+    classes.sort((a, b) => {
+      const aTime = typeof a.createdAt?.toMillis === 'function' ? a.createdAt.toMillis() : 0;
+      const bTime = typeof b.createdAt?.toMillis === 'function' ? b.createdAt.toMillis() : 0;
+      return bTime - aTime;
+    });
+    res.json(classes);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
