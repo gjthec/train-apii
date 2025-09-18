@@ -1,0 +1,45 @@
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.cardHeader span {
+  background: #7c3aed;
+  color: #ffffff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.metrics div {
+  background: #eef2ff;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.metrics dt {
+  font-weight: 600;
+  color: #312e81;
+}
+
+.metrics dd {
+  color: #4338ca;
+}

@@ -1,0 +1,34 @@
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.cardHeader h3 {
+  font-size: 1.25rem;
+}
+
+.cardHeader time {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.cardFooter {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1.5rem;
+  color: #4b5563;
+}
+
+.cardFooter span strong {
+  color: #111827;
+}

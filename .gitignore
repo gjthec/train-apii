@@ -1,4 +1,15 @@
-.env
+# Keep credentials out of version control
 credentials/
 cesar123*
 node_modules/
+# Ignore build output from both apps
+/.next
+/backend/.next
+/frontend/.next
+/frontend/out
+/backend/node_modules/
+/frontend/node_modules/
+# Allow committing the sample environment files
+!.env
+!backend/.env
+!frontend/.env.local.example
