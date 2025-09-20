@@ -1,8 +1,10 @@
 import {
+  addDoc,
   collection,
   getDocs,
   orderBy,
   query,
+  serverTimestamp,
   type DocumentData,
   type FirestoreDataConverter
 } from 'firebase/firestore';
@@ -50,6 +52,15 @@ const toStringArray = (value: unknown): string[] | undefined => {
 const toNumberOrUndefined = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 
+const sanitizeOptionalString = (value: string | undefined): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
 export interface ExerciseClass {
   id: string;
   name: string;
@@ -89,6 +100,15 @@ export interface Session {
   start?: IsoDateString;
   duration?: string;
   className?: string;
+}
+
+export interface NewWorkoutInput {
+  name: string;
+  focus?: string;
+  difficulty?: string;
+  exerciseCount?: number;
+  estimatedDuration?: string;
+  summary?: string;
 }
 
 const createExerciseClassConverter = (): FirestoreDataConverter<ExerciseClass> => ({
@@ -182,6 +202,46 @@ export async function fetchExerciseClasses(): Promise<ExerciseClass[]> {
 
 export async function fetchWorkouts(): Promise<Workout[]> {
   return fetchOrderedUserCollection('workouts', 'createdAt', createWorkoutConverter());
+}
+
+export async function createWorkout(input: NewWorkoutInput): Promise<Workout> {
+  const name = sanitizeOptionalString(input.name);
+  if (!name) {
+    throw new Error('Informe um nome para o treino.');
+  }
+
+  const focus = sanitizeOptionalString(input.focus);
+  const difficulty = sanitizeOptionalString(input.difficulty);
+  const estimatedDuration = sanitizeOptionalString(input.estimatedDuration);
+  const summary = sanitizeOptionalString(input.summary);
+  const exerciseCount =
+    typeof input.exerciseCount === 'number' && Number.isFinite(input.exerciseCount)
+      ? input.exerciseCount
+      : undefined;
+
+  const uid = await requireUid();
+  const db = getDb();
+  const workoutsCollection = collection(db, `users/${uid}/workouts`);
+  const docRef = await addDoc(workoutsCollection, {
+    name,
+    ...(focus ? { focus } : {}),
+    ...(difficulty ? { difficulty } : {}),
+    ...(typeof exerciseCount === 'number' ? { exerciseCount } : {}),
+    ...(estimatedDuration ? { estimatedDuration } : {}),
+    ...(summary ? { summary } : {}),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+
+  return {
+    id: docRef.id,
+    name,
+    focus,
+    difficulty,
+    exerciseCount,
+    estimatedDuration,
+    summary
+  };
 }
 
 export async function fetchExercises(): Promise<Exercise[]> {
