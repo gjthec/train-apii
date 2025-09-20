@@ -72,6 +72,7 @@ const createEmptyExercise = (): WorkoutExerciseDraft => ({
 });
 
 const createInitialState = (): WorkoutClassFormState => ({
+  workoutId: null,
   name: '',
   focus: '',
   scheduledFor: getTodayInputValue(),
@@ -97,6 +98,7 @@ const createStateFromWorkout = (workout: WorkoutClass): WorkoutClassFormState =>
   ];
 
   return {
+    workoutId: workout.id ?? null,
     name: workout.name ?? '',
     focus: workout.focus ?? '',
     scheduledFor: getTodayInputValue(),
@@ -248,6 +250,7 @@ export default function WorkoutClassForm({
     event.preventDefault();
 
     const payload: NewWorkoutClassInput = {
+      workoutId: formState.workoutId ?? undefined,
       name: formState.name,
       focus: formState.focus,
       scheduledFor: normalizeDateInput(formState.scheduledFor),

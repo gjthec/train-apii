@@ -3,10 +3,12 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
   type DocumentData,
   type FirestoreDataConverter
 } from 'firebase/firestore';
@@ -121,6 +123,28 @@ const resolveScheduledForDate = (value?: string): string => {
   return formatDateForInput(new Date());
 };
 
+const normalizeStoredDate = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    return formatDateForInput(parsed);
+  }
+
+  return undefined;
+};
+
 export interface ExerciseClass {
   id: string;
   name: string;
@@ -146,6 +170,17 @@ export interface WorkoutExercise {
   seriesCount: number;
 }
 
+export interface WorkoutSession {
+  id: string;
+  scheduledFor: IsoDateString;
+  notes?: string;
+  exercises: WorkoutExercise[];
+  exerciseCount: number;
+  totalSets: number;
+  createdAt?: IsoDateString;
+  updatedAt?: IsoDateString;
+}
+
 export interface WorkoutClass {
   id: string;
   name: string;
@@ -157,6 +192,9 @@ export interface WorkoutClass {
   totalSets: number;
   createdAt?: IsoDateString;
   updatedAt?: IsoDateString;
+  sessions: WorkoutSession[];
+  sessionCount: number;
+  lastSessionOn?: IsoDateString;
 }
 
 export interface Exercise {
@@ -203,6 +241,7 @@ export interface WorkoutExerciseInput {
 }
 
 export interface NewWorkoutClassInput {
+  workoutId?: string;
   name: string;
   focus?: string;
   scheduledFor?: string;
@@ -266,6 +305,14 @@ const toWorkoutSets = (value: unknown): WorkoutSet[] => {
   return sets;
 };
 
+const sortSessionsByDateDesc = (sessions: WorkoutSession[]): WorkoutSession[] => {
+  return [...sessions].sort((a, b) => {
+    const aValue = Date.parse(`${a.scheduledFor}T00:00:00`);
+    const bValue = Date.parse(`${b.scheduledFor}T00:00:00`);
+    return Number.isNaN(bValue) ? -1 : Number.isNaN(aValue) ? 1 : bValue - aValue;
+  });
+};
+
 const toWorkoutExercises = (value: unknown): WorkoutExercise[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -302,26 +349,108 @@ const toWorkoutExercises = (value: unknown): WorkoutExercise[] => {
   return exercises;
 };
 
+const toWorkoutSessions = (value: unknown): WorkoutSession[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const sessions: WorkoutSession[] = [];
+
+  value.forEach((item, index) => {
+    if (typeof item !== 'object' || item === null) {
+      return;
+    }
+
+    const asRecord = item as Record<string, unknown>;
+    const scheduledFor = normalizeStoredDate(asRecord.scheduledFor ?? asRecord.date);
+    if (!scheduledFor) {
+      return;
+    }
+
+    const exercises = toWorkoutExercises(asRecord.exercises);
+    if (exercises.length === 0) {
+      return;
+    }
+
+    const exerciseCount = exercises.length;
+    const totalSets = exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
+
+    sessions.push({
+      id: ensureIdentifier('session', index, asRecord.id),
+      scheduledFor,
+      notes: toStringOrUndefined(asRecord.notes),
+      exercises,
+      exerciseCount,
+      totalSets,
+      createdAt: toIsoDate(asRecord.createdAt),
+      updatedAt: toIsoDate(asRecord.updatedAt)
+    });
+  });
+
+  return sortSessionsByDateDesc(sessions);
+};
+
 const createWorkoutClassConverter = (): FirestoreDataConverter<WorkoutClass> => ({
   toFirestore() {
     throw new Error('Serialization is not supported on the client.');
   },
   fromFirestore(snapshot) {
     const data: DocumentData = snapshot.data();
-    const exercises = toWorkoutExercises(data.exercises);
-    const totalSets = exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
+    let sessions = toWorkoutSessions(data.sessions);
+
+    if (sessions.length === 0) {
+      const fallbackExercises = toWorkoutExercises(data.exercises);
+      if (fallbackExercises.length > 0) {
+        const fallbackDate =
+          normalizeStoredDate(data.scheduledFor) ??
+          normalizeStoredDate(data.updatedAt) ??
+          normalizeStoredDate(data.createdAt) ??
+          formatDateForInput(new Date());
+
+        const fallbackTotalSets = fallbackExercises.reduce(
+          (total, exercise) => total + exercise.seriesCount,
+          0
+        );
+
+        sessions = [
+          {
+            id: ensureIdentifier('session', 0, undefined),
+            scheduledFor: fallbackDate,
+            notes: toStringOrUndefined(data.notes),
+            exercises: fallbackExercises,
+            exerciseCount: fallbackExercises.length,
+            totalSets: fallbackTotalSets,
+            createdAt: toIsoDate(data.createdAt),
+            updatedAt: toIsoDate(data.updatedAt)
+          }
+        ];
+      }
+    }
+
+    const latestSession = sessions[0];
+    const exercises = latestSession?.exercises ?? toWorkoutExercises(data.exercises);
+    const exerciseCount = latestSession?.exerciseCount ?? exercises.length;
+    const totalSets = latestSession?.totalSets ?? exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
+    const scheduledFor =
+      latestSession?.scheduledFor ??
+      normalizeStoredDate(data.scheduledFor) ??
+      normalizeStoredDate(data.updatedAt) ??
+      normalizeStoredDate(data.createdAt);
 
     return {
       id: snapshot.id,
       name: toStringOrUndefined(data.name) ?? 'Treino sem nome',
       focus: toStringOrUndefined(data.focus),
-      scheduledFor: toIsoDate(data.scheduledFor),
+      scheduledFor,
       notes: toStringOrUndefined(data.notes),
       exercises,
-      exerciseCount: exercises.length,
+      exerciseCount,
       totalSets,
       createdAt: toIsoDate(data.createdAt),
-      updatedAt: toIsoDate(data.updatedAt)
+      updatedAt: toIsoDate(data.updatedAt),
+      sessions,
+      sessionCount: sessions.length,
+      lastSessionOn: sessions[0]?.scheduledFor
     } satisfies WorkoutClass;
   }
 });
@@ -444,6 +573,31 @@ const sanitizeWorkoutExerciseInput = (
   } satisfies WorkoutExercise;
 };
 
+const serializeWorkoutExercise = (exercise: WorkoutExercise) => ({
+  id: exercise.id,
+  name: exercise.name,
+  ...(exercise.muscleGroup ? { muscleGroup: exercise.muscleGroup } : {}),
+  ...(exercise.notes ? { notes: exercise.notes } : {}),
+  sets: exercise.sets.map((set) => ({
+    id: set.id,
+    order: set.order,
+    weightKg: set.weightKg,
+    repetitions: set.repetitions
+  })),
+  seriesCount: exercise.seriesCount
+});
+
+const serializeWorkoutSession = (session: WorkoutSession) => ({
+  id: session.id,
+  scheduledFor: session.scheduledFor,
+  ...(session.notes ? { notes: session.notes } : {}),
+  exercises: session.exercises.map(serializeWorkoutExercise),
+  exerciseCount: session.exerciseCount,
+  totalSets: session.totalSets,
+  ...(session.createdAt ? { createdAt: session.createdAt } : {}),
+  ...(session.updatedAt ? { updatedAt: session.updatedAt } : {})
+});
+
 export async function fetchWorkoutClasses(): Promise<WorkoutClass[]> {
   return fetchOrderedUserCollection('workouts', 'createdAt', createWorkoutClassConverter());
 }
@@ -467,40 +621,106 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
 
   const uid = await requireUid();
   const db = getDb();
+  const nowIso = new Date().toISOString();
+  const session: WorkoutSession = {
+    id: ensureIdentifier('session', Date.now(), undefined),
+    scheduledFor,
+    notes,
+    exercises,
+    exerciseCount: exercises.length,
+    totalSets,
+    createdAt: nowIso,
+    updatedAt: nowIso
+  };
+
+  const existingWorkoutId = sanitizeOptionalString(input.workoutId);
+
+  if (existingWorkoutId) {
+    const workoutRef = doc(db, `users/${uid}/workouts/${existingWorkoutId}`);
+    const snapshot = await getDoc(workoutRef);
+
+    if (!snapshot.exists()) {
+      throw new Error('O treino selecionado não foi encontrado.');
+    }
+
+    const data = snapshot.data() as DocumentData;
+    const existingSessions = toWorkoutSessions(data.sessions);
+    const mergedSessions = sortSessionsByDateDesc([
+      session,
+      ...existingSessions.filter((existing) => existing.id !== session.id)
+    ]);
+    const serializedSessions = mergedSessions.map(serializeWorkoutSession);
+    const existingCreatedAt = toIsoDate(data.createdAt) ?? nowIso;
+    const nextFocus = focus ?? toStringOrUndefined(data.focus);
+    const nextNotes = notes ?? toStringOrUndefined(data.notes);
+
+    const updatePayload: Record<string, unknown> = {
+      name,
+      sessions: serializedSessions,
+      sessionCount: mergedSessions.length,
+      scheduledFor: session.scheduledFor,
+      exerciseCount: session.exerciseCount,
+      totalSets: session.totalSets,
+      lastSessionOn: session.scheduledFor,
+      updatedAt: nowIso
+    };
+
+    if (nextFocus) {
+      updatePayload.focus = nextFocus;
+    }
+
+    if (nextNotes) {
+      updatePayload.notes = nextNotes;
+    }
+
+    await updateDoc(workoutRef, updatePayload);
+
+    return {
+      id: existingWorkoutId,
+      name,
+      focus: nextFocus,
+      scheduledFor: session.scheduledFor,
+      notes: nextNotes,
+      exercises: session.exercises,
+      exerciseCount: session.exerciseCount,
+      totalSets: session.totalSets,
+      createdAt: existingCreatedAt,
+      updatedAt: nowIso,
+      sessions: mergedSessions,
+      sessionCount: mergedSessions.length,
+      lastSessionOn: session.scheduledFor
+    } satisfies WorkoutClass;
+  }
+
   const workoutsCollection = collection(db, `users/${uid}/workouts`);
   const docRef = await addDoc(workoutsCollection, {
     name,
     ...(focus ? { focus } : {}),
     ...(notes ? { notes } : {}),
-    scheduledFor,
-    exercises: exercises.map((exercise) => ({
-      id: exercise.id,
-      name: exercise.name,
-      ...(exercise.muscleGroup ? { muscleGroup: exercise.muscleGroup } : {}),
-      ...(exercise.notes ? { notes: exercise.notes } : {}),
-      sets: exercise.sets.map((set) => ({
-        id: set.id,
-        order: set.order,
-        weightKg: set.weightKg,
-        repetitions: set.repetitions
-      })),
-      seriesCount: exercise.seriesCount
-    })),
-    exerciseCount: exercises.length,
-    totalSets,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    sessions: [serializeWorkoutSession(session)],
+    sessionCount: 1,
+    scheduledFor: session.scheduledFor,
+    exerciseCount: session.exerciseCount,
+    totalSets: session.totalSets,
+    lastSessionOn: session.scheduledFor,
+    createdAt: nowIso,
+    updatedAt: nowIso
   });
 
   return {
     id: docRef.id,
     name,
     focus,
-    scheduledFor,
+    scheduledFor: session.scheduledFor,
     notes,
-    exercises,
-    exerciseCount: exercises.length,
-    totalSets
+    exercises: session.exercises,
+    exerciseCount: session.exerciseCount,
+    totalSets: session.totalSets,
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    sessions: [session],
+    sessionCount: 1,
+    lastSessionOn: session.scheduledFor
   } satisfies WorkoutClass;
 }
 

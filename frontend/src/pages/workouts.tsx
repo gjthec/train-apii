@@ -36,9 +36,15 @@ const toSortableNumber = (value?: string): number => {
 const sortWorkoutsByDate = (items: WorkoutClass[]): WorkoutClass[] => {
   return [...items].sort((a, b) => {
     const aValue =
-      toSortableNumber(a.scheduledFor) || toSortableNumber(a.updatedAt) || toSortableNumber(a.createdAt);
+      toSortableNumber(a.lastSessionOn) ||
+      toSortableNumber(a.scheduledFor) ||
+      toSortableNumber(a.updatedAt) ||
+      toSortableNumber(a.createdAt);
     const bValue =
-      toSortableNumber(b.scheduledFor) || toSortableNumber(b.updatedAt) || toSortableNumber(b.createdAt);
+      toSortableNumber(b.lastSessionOn) ||
+      toSortableNumber(b.scheduledFor) ||
+      toSortableNumber(b.updatedAt) ||
+      toSortableNumber(b.createdAt);
 
     return bValue - aValue;
   });
@@ -73,7 +79,9 @@ export default function WorkoutsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroupClass[]>([]);
   const [muscleGroupError, setMuscleGroupError] = useState<string | null>(null);
-  const [prefillRequest, setPrefillRequest] = useState<{ workout: WorkoutClass; token: number } | null>(null);
+  const [prefillRequest, setPrefillRequest] = useState<
+    { workout: WorkoutClass; token: number } | null
+  >(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(() => new Set());
   const [mode, setMode] = useState<WorkoutsPageMode>('new');
   const [selectedExistingId, setSelectedExistingId] = useState<string>('');
@@ -147,13 +155,45 @@ export default function WorkoutsPage() {
     setSuccessMessage(null);
     setIsSubmitting(true);
 
+    const isExistingWorkout = Boolean(input.workoutId);
+
     try {
-      const newWorkout = await createWorkoutClass(input);
-      setWorkouts((previous) => [newWorkout, ...previous]);
-      if (newWorkout.scheduledFor) {
-        setSuccessMessage(`Treino registrado para ${formatScheduleForMessage(newWorkout.scheduledFor)}.`);
+      const savedWorkout = await createWorkoutClass(input);
+      setWorkouts((previous) => {
+        const index = previous.findIndex((item) => item.id === savedWorkout.id);
+        if (index === -1) {
+          return [savedWorkout, ...previous];
+        }
+
+        const next = [...previous];
+        next[index] = savedWorkout;
+        return next;
+      });
+
+      setSelectedExistingId((previous) => {
+        if (isExistingWorkout) {
+          return savedWorkout.id;
+        }
+
+        return previous || savedWorkout.id;
+      });
+
+      const formattedDate = savedWorkout.scheduledFor
+        ? formatScheduleForMessage(savedWorkout.scheduledFor)
+        : null;
+
+      if (isExistingWorkout) {
+        setSuccessMessage(
+          formattedDate
+            ? `Novo dia registrado para ${savedWorkout.name} em ${formattedDate}.`
+            : `Novo dia registrado para ${savedWorkout.name}.`
+        );
       } else {
-        setSuccessMessage('Treino registrado com sucesso.');
+        setSuccessMessage(
+          formattedDate
+            ? `Treino ${savedWorkout.name} criado com registro em ${formattedDate}.`
+            : `Treino ${savedWorkout.name} cadastrado com sucesso.`
+        );
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível salvar o treino.';
@@ -181,7 +221,9 @@ export default function WorkoutsPage() {
     }
 
     if (typeof window !== 'undefined') {
-      const confirmed = window.confirm(`Deseja realmente excluir o treino "${workout.name}"?`);
+      const confirmed = window.confirm(
+        `Deseja realmente excluir o treino "${workout.name}" e todos os dias registrados?`
+      );
       if (!confirmed) {
         return;
       }
@@ -198,7 +240,7 @@ export default function WorkoutsPage() {
     try {
       await deleteWorkoutClass(workout.id);
       setWorkouts((previous) => previous.filter((item) => item.id !== workout.id));
-      setSuccessMessage('Treino excluído com sucesso.');
+      setSuccessMessage('Treino e histórico excluídos com sucesso.');
       setPrefillRequest((previous) => {
         if (previous && previous.workout.id === workout.id) {
           return null;
@@ -328,12 +370,20 @@ export default function WorkoutsPage() {
                 ) : null}
                 {sortedWorkouts.map((item) => {
                   const labelParts: string[] = [item.name];
-                  if (item.scheduledFor) {
+                  if (item.lastSessionOn) {
+                    labelParts.push(`Último em ${formatScheduleForMessage(item.lastSessionOn)}`);
+                  } else if (item.scheduledFor) {
                     labelParts.push(`Registrado em ${formatScheduleForMessage(item.scheduledFor)}`);
                   } else if (item.updatedAt) {
                     labelParts.push(`Atualizado em ${formatScheduleForMessage(item.updatedAt)}`);
                   } else if (item.createdAt) {
                     labelParts.push(`Criado em ${formatScheduleForMessage(item.createdAt)}`);
+                  }
+
+                  if (typeof item.sessionCount === 'number' && item.sessionCount > 0) {
+                    labelParts.push(
+                      `${item.sessionCount} ${item.sessionCount === 1 ? 'dia registrado' : 'dias registrados'}`
+                    );
                   }
 
                   return (

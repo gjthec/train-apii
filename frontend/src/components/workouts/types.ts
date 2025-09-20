@@ -13,6 +13,7 @@ export interface WorkoutExerciseDraft {
 }
 
 export interface WorkoutClassFormState {
+  workoutId: string | null;
   name: string;
   focus: string;
   scheduledFor: string;

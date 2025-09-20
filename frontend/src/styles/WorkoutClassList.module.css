@@ -1,3 +1,9 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .card {
   display: flex;
   flex-direction: column;
@@ -54,6 +60,70 @@
   justify-content: flex-end;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.sessionTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.sessionTab {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid #cbd5f5;
+  background: #f8fafc;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sessionTab:hover,
+.sessionTab:focus-visible {
+  background: #e0f2fe;
+  outline: none;
+}
+
+.activeSessionTab {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #1d4ed8;
+  box-shadow: 0 12px 30px rgba(29, 78, 216, 0.22);
+}
+
+.sessionTabLabel {
+  font-size: 0.95rem;
+}
+
+.sessionTabMeta {
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.sessionSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sessionInfo {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.emptyMessage {
+  padding: 1.25rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  color: #9a3412;
 }
 
 .duplicateButton {
@@ -204,5 +274,13 @@
 
   .cardActions {
     justify-content: flex-start;
+  }
+
+  .sessionTabs {
+    gap: 0.5rem;
+  }
+
+  .sessionTab {
+    width: 100%;
   }
 }
