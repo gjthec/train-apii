@@ -7,8 +7,10 @@ import WorkoutClassForm from '@/components/workouts/WorkoutClassForm';
 import WorkoutClassList from '@/components/workouts/WorkoutClassList';
 import {
   createWorkoutClass,
+  fetchMuscleGroupClasses,
   fetchWorkoutClasses,
   type NewWorkoutClassInput,
+  type MuscleGroupClass,
   type WorkoutClass
 } from '@/lib/api';
 import styles from '@/styles/Workouts.module.css';
@@ -18,21 +20,43 @@ export default function WorkoutsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [muscleGroups, setMuscleGroups] = useState<MuscleGroupClass[]>([]);
+  const [muscleGroupError, setMuscleGroupError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    fetchWorkoutClasses()
-      .then((data) => {
+    const loadWorkouts = async () => {
+      try {
+        const data = await fetchWorkoutClasses();
         if (!isMounted) return;
         setWorkouts(data);
         setError(null);
-      })
-      .catch((err: unknown) => {
+      } catch (err) {
         if (!isMounted) return;
         const message = err instanceof Error ? err.message : 'Não foi possível carregar os treinos.';
         setError(message);
-      });
+      }
+    };
+
+    const loadMuscleGroups = async () => {
+      try {
+        const data = await fetchMuscleGroupClasses();
+        if (!isMounted) return;
+        setMuscleGroups(data);
+        setMuscleGroupError(null);
+      } catch (err) {
+        if (!isMounted) return;
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Não foi possível carregar os grupos musculares.';
+        setMuscleGroupError(message);
+      }
+    };
+
+    void loadWorkouts();
+    void loadMuscleGroups();
 
     return () => {
       isMounted = false;
@@ -63,7 +87,12 @@ export default function WorkoutsPage() {
         <title>Train API - Treinos</title>
       </Head>
       <section className={styles.formSection}>
-        <WorkoutClassForm onSubmit={handleCreateWorkout} isSubmitting={isSubmitting} />
+        <WorkoutClassForm
+          onSubmit={handleCreateWorkout}
+          isSubmitting={isSubmitting}
+          muscleGroups={muscleGroups}
+          muscleGroupError={muscleGroupError}
+        />
         {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
         {error ? <p className={styles.error}>{error}</p> : null}
       </section>

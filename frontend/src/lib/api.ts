@@ -146,6 +146,13 @@ export interface Exercise {
   rest?: string;
 }
 
+export interface MuscleGroupClass {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt?: IsoDateString;
+}
+
 export interface Session {
   id: string;
   title: string;
@@ -176,6 +183,11 @@ export interface NewWorkoutClassInput {
   scheduledFor?: string;
   notes?: string;
   exercises: WorkoutExerciseInput[];
+}
+
+export interface NewMuscleGroupClassInput {
+  name: string;
+  description?: string;
 }
 
 const createExerciseClassConverter = (): FirestoreDataConverter<ExerciseClass> => ({
@@ -309,6 +321,21 @@ const createExerciseConverter = (): FirestoreDataConverter<Exercise> => ({
   }
 });
 
+const createMuscleGroupClassConverter = (): FirestoreDataConverter<MuscleGroupClass> => ({
+  toFirestore() {
+    throw new Error('Serialization is not supported on the client.');
+  },
+  fromFirestore(snapshot) {
+    const data: DocumentData = snapshot.data();
+    return {
+      id: snapshot.id,
+      name: toStringOrUndefined(data.name) ?? 'Grupo muscular sem nome',
+      description: toStringOrUndefined(data.description),
+      createdAt: toIsoDate(data.createdAt)
+    } satisfies MuscleGroupClass;
+  }
+});
+
 const createSessionConverter = (): FirestoreDataConverter<Session> => ({
   toFirestore() {
     throw new Error('Serialization is not supported on the client.');
@@ -341,6 +368,10 @@ async function fetchOrderedUserCollection<T>(
 
 export async function fetchExerciseClasses(): Promise<ExerciseClass[]> {
   return fetchOrderedUserCollection('exerciseClasses', 'createdAt', createExerciseClassConverter());
+}
+
+export async function fetchMuscleGroupClasses(): Promise<MuscleGroupClass[]> {
+  return fetchOrderedUserCollection('muscleGroups', 'createdAt', createMuscleGroupClassConverter());
 }
 
 const sanitizeWorkoutSetInput = (
@@ -446,6 +477,32 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
     exerciseCount: exercises.length,
     totalSets
   } satisfies WorkoutClass;
+}
+
+export async function createMuscleGroupClass(
+  input: NewMuscleGroupClassInput
+): Promise<MuscleGroupClass> {
+  const name = sanitizeOptionalString(input.name);
+  if (!name) {
+    throw new Error('Informe um nome para o grupo muscular.');
+  }
+
+  const description = sanitizeOptionalString(input.description);
+  const uid = await requireUid();
+  const db = getDb();
+  const groupsCollection = collection(db, `users/${uid}/muscleGroups`);
+  const docRef = await addDoc(groupsCollection, {
+    name,
+    ...(description ? { description } : {}),
+    createdAt: serverTimestamp()
+  });
+
+  return {
+    id: docRef.id,
+    name,
+    description: description ?? undefined,
+    createdAt: new Date().toISOString()
+  } satisfies MuscleGroupClass;
 }
 
 export async function fetchExercises(): Promise<Exercise[]> {

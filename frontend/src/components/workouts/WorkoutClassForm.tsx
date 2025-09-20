@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import type { NewWorkoutClassInput } from '@/lib/api';
+import type { MuscleGroupClass, NewWorkoutClassInput } from '@/lib/api';
 import styles from '@/styles/WorkoutClassForm.module.css';
 import WorkoutExerciseFields from './WorkoutExerciseFields';
 import type {
@@ -13,6 +14,8 @@ import type {
 interface WorkoutClassFormProps {
   onSubmit: (input: NewWorkoutClassInput) => Promise<void>;
   isSubmitting: boolean;
+  muscleGroups: readonly MuscleGroupClass[];
+  muscleGroupError?: string | null;
 }
 
 type TextInputEvent = { target: { value: string } };
@@ -53,9 +56,15 @@ const toNumberOrUndefined = (value: string, isInteger = false): number | undefin
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-export default function WorkoutClassForm({ onSubmit, isSubmitting }: WorkoutClassFormProps) {
+export default function WorkoutClassForm({
+  onSubmit,
+  isSubmitting,
+  muscleGroups,
+  muscleGroupError
+}: WorkoutClassFormProps) {
   const [formState, setFormState] = useState<WorkoutClassFormState>(() => createInitialState());
   const exercisesCount = formState.exercises.length;
+  const hasMuscleGroups = muscleGroups.length > 0;
 
   const handleRootFieldChange = (field: 'name' | 'focus' | 'scheduledFor' | 'notes') =>
     (event: TextInputEvent) => {
@@ -179,6 +188,13 @@ export default function WorkoutClassForm({ onSubmit, isSubmitting }: WorkoutClas
           {exercisesCount} {exercisesCount === 1 ? 'exercício' : 'exercícios'}
         </span>
       </header>
+      {muscleGroupError ? <p className={styles.inlineError}>{muscleGroupError}</p> : null}
+      {!hasMuscleGroups ? (
+        <p className={styles.supportMessage}>
+          Cadastre os grupos musculares em <Link href="/muscle-groups">Grupos musculares</Link> para
+          habilitar a seleção durante o cadastro dos exercícios.
+        </p>
+      ) : null}
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.inlineFields}>
           <div className={styles.fieldGroup}>
@@ -233,6 +249,7 @@ export default function WorkoutClassForm({ onSubmit, isSubmitting }: WorkoutClas
               index={index}
               exercise={exercise}
               canRemove={formState.exercises.length > 1}
+              muscleGroupOptions={muscleGroups}
               onExerciseFieldChange={handleExerciseFieldChange}
               onSetFieldChange={handleSetFieldChange}
               onAddSet={handleAddSet}

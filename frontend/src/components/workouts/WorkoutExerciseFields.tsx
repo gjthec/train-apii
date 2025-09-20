@@ -1,5 +1,6 @@
 'use client';
 
+import type { MuscleGroupClass } from '@/lib/api';
 import styles from '@/styles/WorkoutClassForm.module.css';
 import type { WorkoutExerciseDraft } from './types';
 
@@ -9,6 +10,7 @@ interface WorkoutExerciseFieldsProps {
   exercise: WorkoutExerciseDraft;
   index: number;
   canRemove: boolean;
+  muscleGroupOptions: readonly MuscleGroupClass[];
   onExerciseFieldChange: (exerciseId: string, field: 'name' | 'muscleGroup' | 'notes', value: string) => void;
   onSetFieldChange: (exerciseId: string, setId: string, field: 'weight' | 'repetitions', value: string) => void;
   onAddSet: (exerciseId: string) => void;
@@ -22,12 +24,22 @@ export default function WorkoutExerciseFields({
   exercise,
   index,
   canRemove,
+  muscleGroupOptions,
   onExerciseFieldChange,
   onSetFieldChange,
   onAddSet,
   onRemoveSet,
   onRemoveExercise
 }: WorkoutExerciseFieldsProps) {
+  const hasOptions = muscleGroupOptions.length > 0;
+  const isCustomMuscleGroup =
+    exercise.muscleGroup.length > 0 &&
+    !muscleGroupOptions.some((option) => option.name === exercise.muscleGroup);
+  const muscleGroupPlaceholder = hasOptions
+    ? 'Selecione um grupo'
+    : 'Cadastre grupos musculares para habilitar';
+  const selectDisabled = !hasOptions && !isCustomMuscleGroup;
+
   return (
     <fieldset className={styles.exerciseCard}>
       <legend className={styles.exerciseLegend}>Exercício {index + 1}</legend>
@@ -45,13 +57,23 @@ export default function WorkoutExerciseFields({
         </div>
         <div className={styles.fieldGroup}>
           <label htmlFor={`exercise-muscle-${exercise.id}`}>Grupo muscular</label>
-          <input
+          <select
             id={`exercise-muscle-${exercise.id}`}
             value={exercise.muscleGroup}
             onChange={(event: TextInputEvent) =>
               onExerciseFieldChange(exercise.id, 'muscleGroup', event.target.value)}
-            placeholder="Ex.: Quadríceps"
-          />
+            disabled={selectDisabled}
+          >
+            <option value="">{muscleGroupPlaceholder}</option>
+            {isCustomMuscleGroup ? (
+              <option value={exercise.muscleGroup}>{`Personalizado: ${exercise.muscleGroup}`}</option>
+            ) : null}
+            {muscleGroupOptions.map((option) => (
+              <option key={option.id} value={option.name}>
+                {option.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

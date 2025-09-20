@@ -53,18 +53,28 @@
   color: #1f2937;
 }
 
-.fieldGroup input {
+.fieldGroup input,
+.fieldGroup select {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 0.75rem 1rem;
   font-size: 1rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: #ffffff;
+  font-family: inherit;
 }
 
-.fieldGroup input:focus {
+.fieldGroup input:focus,
+.fieldGroup select:focus {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+.fieldGroup select:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  color: #6b7280;
 }
 
 .exerciseList {
@@ -198,6 +208,34 @@
   gap: 0.75rem;
   justify-content: flex-end;
   align-items: center;
+}
+
+.inlineError {
+  margin: 0;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+
+.supportMessage {
+  margin: 0;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+
+.supportMessage a {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.supportMessage a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 720px) {
