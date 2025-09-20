@@ -167,7 +167,7 @@ backend/
 
 ## Frontend (Next.js)
 
-A interface web baseada em React está localizada em `./frontend` e agora consulta diretamente o Firestore via SDK do Firebase para listar aulas, treinos, exercícios e sessões.
+A interface web baseada em React está localizada em `./frontend` e acessa diretamente o Firebase Firestore usando o SDK oficial. As credenciais expostas no arquivo de exemplo habilitam apenas operações de leitura, de modo que o frontend consegue listar as aulas, treinos e sessões sem depender do backend Express.
 
 ### Como executar
 
@@ -176,7 +176,9 @@ A interface web baseada em React está localizada em `./frontend` e agora consul
    cd frontend
    npm install
    ```
-2. Copie [`frontend/.env.local.example`](frontend/.env.local.example) para `.env.local` e ajuste as variáveis `NEXT_PUBLIC_FIREBASE_*` e `NEXT_PUBLIC_DEFAULT_USER_ID` conforme o seu projeto.
+2. Copie [`frontend/.env.local.example`](frontend/.env.local.example) para `.env.local` e ajuste as variáveis se necessário:
+   - `NEXT_PUBLIC_FIREBASE_*`: configuração do projeto Firebase usada para leitura pública.
+   - `NEXT_PUBLIC_DEFAULT_USER_ID`: usuário cujos registros serão filtrados nas consultas.
 3. Execute o servidor de desenvolvimento:
    ```bash
    npm run dev
@@ -186,9 +188,9 @@ A interface web baseada em React está localizada em `./frontend` e agora consul
 ### Telas disponíveis
 
 - **Painel** (`/`): visão geral com atalhos para as demais telas.
-- **Aulas** (`/exercise-classes`): lista as classes encontradas na coleção `exerciseClasses`.
-- **Treinos** (`/workouts`): mostra nome, foco, dificuldade e métricas dos treinos armazenados no Firestore.
-- **Exercícios** (`/exercises`): apresenta detalhes de execução, grupos musculares e repetições de cada documento em `exercises`.
-- **Sessões** (`/sessions`): exibe as sessões agendadas com status, data e aula relacionada a partir da coleção `sessions`.
+- **Aulas** (`/exercise-classes`): lista as classes salvas na coleção `exerciseClasses` do Firestore.
+- **Treinos** (`/workouts`): mostra nome, foco, dificuldade e métricas dos treinos carregados da coleção `workouts`.
+- **Exercícios** (`/exercises`): apresenta detalhes de execução, grupos musculares e repetições obtidos da coleção `exercises`.
+- **Sessões** (`/sessions`): exibe as sessões agendadas com status, data e aula relacionada da coleção `sessions`.
 
-Todas as telas aplicam estilos consistentes e exibem mensagens de erro amigáveis quando a API retorna falha.
+Todas as telas aplicam estilos consistentes e exibem mensagens de erro amigáveis quando alguma consulta ao Firebase falha.
