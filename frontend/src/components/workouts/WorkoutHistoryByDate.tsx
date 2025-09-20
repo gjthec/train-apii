@@ -104,12 +104,16 @@ interface WorkoutHistoryByDateProps {
   classes: WorkoutClass[];
   emptyLabel: string;
   onDuplicate?: (workout: WorkoutClass) => void;
+  onDelete?: (workout: WorkoutClass) => void;
+  deletingIds?: ReadonlySet<string>;
 }
 
 export default function WorkoutHistoryByDate({
   classes,
   emptyLabel,
-  onDuplicate
+  onDuplicate,
+  onDelete,
+  deletingIds
 }: WorkoutHistoryByDateProps) {
   const groups = useMemo(() => groupWorkoutsByDate(classes), [classes]);
   const [selectedKey, setSelectedKey] = useState<string | undefined>(undefined);
@@ -165,6 +169,8 @@ export default function WorkoutHistoryByDate({
           classes={activeGroup.workouts}
           emptyLabel={emptyLabel}
           onDuplicate={onDuplicate}
+          onDelete={onDelete}
+          deletingIds={deletingIds}
         />
       </div>
     </div>

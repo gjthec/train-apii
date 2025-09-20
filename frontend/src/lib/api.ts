@@ -1,6 +1,8 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   getDocs,
   orderBy,
   query,
@@ -502,6 +504,18 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
   } satisfies WorkoutClass;
 }
 
+export async function deleteWorkoutClass(workoutId: string): Promise<void> {
+  const sanitizedId = sanitizeOptionalString(workoutId);
+  if (!sanitizedId) {
+    throw new Error('Treino inválido para exclusão.');
+  }
+
+  const uid = await requireUid();
+  const db = getDb();
+  const workoutRef = doc(db, `users/${uid}/workouts/${sanitizedId}`);
+  await deleteDoc(workoutRef);
+}
+
 export async function createMuscleGroupClass(
   input: NewMuscleGroupClassInput
 ): Promise<MuscleGroupClass> {
@@ -526,6 +540,18 @@ export async function createMuscleGroupClass(
     description: description ?? undefined,
     createdAt: new Date().toISOString()
   } satisfies MuscleGroupClass;
+}
+
+export async function deleteMuscleGroupClass(groupId: string): Promise<void> {
+  const sanitizedId = sanitizeOptionalString(groupId);
+  if (!sanitizedId) {
+    throw new Error('Grupo muscular inválido para exclusão.');
+  }
+
+  const uid = await requireUid();
+  const db = getDb();
+  const groupRef = doc(db, `users/${uid}/muscleGroups/${sanitizedId}`);
+  await deleteDoc(groupRef);
 }
 
 export async function fetchExercises(): Promise<Exercise[]> {

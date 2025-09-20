@@ -8,6 +8,8 @@ interface WorkoutClassListProps {
   classes: WorkoutClass[];
   emptyLabel: string;
   onDuplicate?: (workout: WorkoutClass) => void;
+  onDelete?: (workout: WorkoutClass) => void;
+  deletingIds?: ReadonlySet<string>;
 }
 
 const formatDate = (value?: string): string | undefined => {
@@ -32,13 +34,21 @@ const weightFormatter = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 0
 });
 
-export default function WorkoutClassList({ classes, emptyLabel, onDuplicate }: WorkoutClassListProps) {
+export default function WorkoutClassList({
+  classes,
+  emptyLabel,
+  onDuplicate,
+  onDelete,
+  deletingIds
+}: WorkoutClassListProps) {
   return (
     <ResourceList
       items={classes}
       emptyLabel={emptyLabel}
       renderItem={(workout) => {
         const formattedDate = formatDate(workout.scheduledFor);
+        const isDeleting = deletingIds?.has(workout.id) ?? false;
+
         return (
           <article className={styles.card}>
             <header className={styles.cardHeader}>
@@ -59,15 +69,28 @@ export default function WorkoutClassList({ classes, emptyLabel, onDuplicate }: W
               </div>
             </header>
             {workout.notes ? <p className={styles.notes}>{workout.notes}</p> : null}
-            {onDuplicate ? (
+            {onDuplicate || onDelete ? (
               <div className={styles.cardActions}>
-                <button
-                  type="button"
-                  className={styles.duplicateButton}
-                  onClick={() => onDuplicate(workout)}
-                >
-                  Registrar novo dia
-                </button>
+                {onDelete ? (
+                  <button
+                    type="button"
+                    className={styles.deleteButton}
+                    onClick={() => onDelete(workout)}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Excluindo...' : 'Excluir'}
+                  </button>
+                ) : null}
+                {onDuplicate ? (
+                  <button
+                    type="button"
+                    className={styles.duplicateButton}
+                    onClick={() => onDuplicate(workout)}
+                    disabled={isDeleting}
+                  >
+                    Registrar novo dia
+                  </button>
+                ) : null}
               </div>
             ) : null}
             <div className={styles.exerciseGrid}>

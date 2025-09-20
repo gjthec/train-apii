@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import ResourceList from '@/components/ResourceList';
 import {
   createMuscleGroupClass,
+  deleteMuscleGroupClass,
   fetchMuscleGroupClasses,
   type MuscleGroupClass,
   type NewMuscleGroupClassInput
@@ -35,6 +36,7 @@ export default function MuscleGroupsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let isMounted = true;
@@ -84,6 +86,42 @@ export default function MuscleGroupsPage() {
       setError(message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteGroup = async (group: MuscleGroupClass) => {
+    if (!group.id) {
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm(`Deseja realmente excluir o grupo "${group.name}"?`);
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setError(null);
+    setSuccessMessage(null);
+    setDeletingIds((previous) => {
+      const next = new Set(previous);
+      next.add(group.id);
+      return next;
+    });
+
+    try {
+      await deleteMuscleGroupClass(group.id);
+      setGroups((prev) => prev.filter((item) => item.id !== group.id));
+      setSuccessMessage('Grupo muscular removido com sucesso.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Não foi possível remover o grupo muscular.';
+      setError(message);
+    } finally {
+      setDeletingIds((previous) => {
+        const next = new Set(previous);
+        next.delete(group.id);
+        return next;
+      });
     }
   };
 
@@ -138,6 +176,16 @@ export default function MuscleGroupsPage() {
                 <time>{formatDate(group.createdAt)}</time>
               </header>
               {group.description ? <p className={styles.cardDescription}>{group.description}</p> : null}
+              <div className={styles.cardActions}>
+                <button
+                  type="button"
+                  className={styles.deleteButton}
+                  onClick={() => handleDeleteGroup(group)}
+                  disabled={deletingIds.has(group.id)}
+                >
+                  {deletingIds.has(group.id) ? 'Excluindo...' : 'Excluir'}
+                </button>
+              </div>
             </article>
           )}
         />

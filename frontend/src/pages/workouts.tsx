@@ -7,6 +7,7 @@ import WorkoutClassForm from '@/components/workouts/WorkoutClassForm';
 import WorkoutHistoryByDate from '@/components/workouts/WorkoutHistoryByDate';
 import {
   createWorkoutClass,
+  deleteWorkoutClass,
   fetchMuscleGroupClasses,
   fetchWorkoutClasses,
   type NewWorkoutClassInput,
@@ -64,6 +65,7 @@ export default function WorkoutsPage() {
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroupClass[]>([]);
   const [muscleGroupError, setMuscleGroupError] = useState<string | null>(null);
   const [prefillRequest, setPrefillRequest] = useState<{ workout: WorkoutClass; token: number } | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let isMounted = true;
@@ -137,6 +139,48 @@ export default function WorkoutsPage() {
     }
   };
 
+  const handleDeleteWorkout = async (workout: WorkoutClass) => {
+    if (!workout.id) {
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm(`Deseja realmente excluir o treino "${workout.name}"?`);
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setError(null);
+    setSuccessMessage(null);
+    setDeletingIds((previous) => {
+      const next = new Set(previous);
+      next.add(workout.id);
+      return next;
+    });
+
+    try {
+      await deleteWorkoutClass(workout.id);
+      setWorkouts((previous) => previous.filter((item) => item.id !== workout.id));
+      setSuccessMessage('Treino excluído com sucesso.');
+      setPrefillRequest((previous) => {
+        if (previous && previous.workout.id === workout.id) {
+          return null;
+        }
+        return previous;
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Não foi possível excluir o treino.';
+      setError(message);
+    } finally {
+      setDeletingIds((previous) => {
+        const next = new Set(previous);
+        next.delete(workout.id);
+        return next;
+      });
+    }
+  };
+
   const handleClearPrefill = () => {
     setPrefillRequest(null);
   };
@@ -163,6 +207,8 @@ export default function WorkoutsPage() {
           classes={workouts}
           emptyLabel="Nenhum treino cadastrado."
           onDuplicate={handleReuseWorkout}
+          onDelete={handleDeleteWorkout}
+          deletingIds={deletingIds}
         />
       </section>
     </Layout>
