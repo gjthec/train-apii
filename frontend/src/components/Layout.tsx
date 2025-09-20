@@ -1,7 +1,16 @@
+'use client';
+
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import styles from '@/styles/Layout.module.css';
 
-const navLinks = [
+interface LayoutProps {
+  title: string;
+  description?: string;
+  children?: ReactNode;
+}
+
+const navLinks: Array<{ href: string; label: string }> = [
   { href: '/', label: 'Visão geral' },
   { href: '/exercise-classes', label: 'Aulas' },
   { href: '/workouts', label: 'Treinos' },
@@ -9,7 +18,7 @@ const navLinks = [
   { href: '/sessions', label: 'Sessões' }
 ];
 
-export default function Layout({ title, description, children }) {
+export default function Layout({ title, description, children }: LayoutProps) {
   return (
     <div className={styles.appShell}>
       <aside className={styles.sidebar}>
