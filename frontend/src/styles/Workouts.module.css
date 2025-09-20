@@ -1,4 +1,14 @@
+.formSection {
+  margin-bottom: 2rem;
+  padding: 1.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px -25px rgba(15, 23, 42, 0.3);
+}
+
 .success {
+  margin-top: 1rem;
   background: #dcfce7;
   color: #166534;
   border: 1px solid #bbf7d0;
@@ -7,6 +17,7 @@
 }
 
 .error {
+  margin-top: 1rem;
   background: #fee2e2;
   color: #991b1b;
   border: 1px solid #fecaca;
@@ -14,131 +25,8 @@
   border-radius: 10px;
 }
 
-.formSection {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 10px 30px -15px rgba(15, 23, 42, 0.2);
-}
-
-.formSection h2 {
-  margin-bottom: 0.5rem;
-}
-
-.formSection p {
-  color: #4b5563;
-  margin-bottom: 1.5rem;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.inlineFields {
-  display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.fieldGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.fieldGroup label {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.fieldGroup input,
-.fieldGroup select,
-.fieldGroup textarea {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.fieldGroup input:focus,
-.fieldGroup select:focus,
-.fieldGroup textarea:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
-}
-
-.fieldGroup textarea {
-  resize: vertical;
-}
-
-.submitButton {
-  align-self: flex-start;
-  background: #2563eb;
-  color: #ffffff;
-  border: none;
-  border-radius: 999px;
-  padding: 0.75rem 1.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
-}
-
-.submitButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.submitButton:not(:disabled):hover {
-  background: #1d4ed8;
-}
-
-.submitButton:not(:disabled):active {
-  transform: translateY(1px);
-}
-
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.cardHeader h3 {
-  font-size: 1.3rem;
-}
-
-.cardHeader p {
-  color: #4b5563;
-}
-
-.difficulty {
-  background: #2563eb;
-  color: #ffffff;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.metrics {
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .formSection {
     padding: 1.25rem;
-  }
-
-  .cardHeader {
-    flex-direction: column;
-    align-items: stretch;
   }
 }

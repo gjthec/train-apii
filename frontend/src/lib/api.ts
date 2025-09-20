@@ -52,6 +52,41 @@ const toStringArray = (value: unknown): string[] | undefined => {
 const toNumberOrUndefined = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 
+const toFiniteNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+};
+
+const toInteger = (value: unknown): number | undefined => {
+  const numeric = toFiniteNumber(value);
+  if (typeof numeric !== 'number') {
+    return undefined;
+  }
+
+  const rounded = Math.round(numeric);
+  return Number.isFinite(rounded) ? rounded : undefined;
+};
+
+const ensureIdentifier = (prefix: string, fallbackIndex: number, value?: unknown): string => {
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value;
+  }
+
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `${prefix}-${Date.now()}-${fallbackIndex}`;
+};
+
 const sanitizeOptionalString = (value: string | undefined): string | undefined => {
   if (typeof value !== 'string') {
     return undefined;
@@ -70,14 +105,33 @@ export interface ExerciseClass {
   totalDuration?: string;
 }
 
-export interface Workout {
+export interface WorkoutSet {
+  id: string;
+  order: number;
+  weightKg: number;
+  repetitions: number;
+}
+
+export interface WorkoutExercise {
+  id: string;
+  name: string;
+  muscleGroup?: string;
+  notes?: string;
+  sets: WorkoutSet[];
+  seriesCount: number;
+}
+
+export interface WorkoutClass {
   id: string;
   name: string;
   focus?: string;
-  difficulty?: string;
-  exerciseCount?: number;
-  estimatedDuration?: string;
-  summary?: string;
+  scheduledFor?: IsoDateString;
+  notes?: string;
+  exercises: WorkoutExercise[];
+  exerciseCount: number;
+  totalSets: number;
+  createdAt?: IsoDateString;
+  updatedAt?: IsoDateString;
 }
 
 export interface Exercise {
@@ -102,13 +156,26 @@ export interface Session {
   className?: string;
 }
 
-export interface NewWorkoutInput {
+export interface WorkoutSetInput {
+  id?: string;
+  weightKg?: number | string;
+  repetitions?: number | string;
+}
+
+export interface WorkoutExerciseInput {
+  id?: string;
+  name: string;
+  muscleGroup?: string;
+  notes?: string;
+  sets: WorkoutSetInput[];
+}
+
+export interface NewWorkoutClassInput {
   name: string;
   focus?: string;
-  difficulty?: string;
-  exerciseCount?: number;
-  estimatedDuration?: string;
-  summary?: string;
+  scheduledFor?: string;
+  notes?: string;
+  exercises: WorkoutExerciseInput[];
 }
 
 const createExerciseClassConverter = (): FirestoreDataConverter<ExerciseClass> => ({
@@ -128,21 +195,97 @@ const createExerciseClassConverter = (): FirestoreDataConverter<ExerciseClass> =
   }
 });
 
-const createWorkoutConverter = (): FirestoreDataConverter<Workout> => ({
+const toWorkoutSets = (value: unknown): WorkoutSet[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const sets: WorkoutSet[] = [];
+
+  value.forEach((item, index) => {
+    if (typeof item !== 'object' || item === null) {
+      return;
+    }
+
+    const asRecord = item as Record<string, unknown>;
+    const weightKg = toFiniteNumber(asRecord.weightKg);
+    const repetitions = toInteger(asRecord.repetitions);
+
+    if (typeof weightKg !== 'number' || typeof repetitions !== 'number') {
+      return;
+    }
+
+    sets.push({
+      id: ensureIdentifier('set', index, asRecord.id),
+      order:
+        typeof asRecord.order === 'number' && Number.isFinite(asRecord.order)
+          ? asRecord.order
+          : index + 1,
+      weightKg,
+      repetitions
+    });
+  });
+
+  return sets;
+};
+
+const toWorkoutExercises = (value: unknown): WorkoutExercise[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const exercises: WorkoutExercise[] = [];
+
+  value.forEach((item, index) => {
+    if (typeof item !== 'object' || item === null) {
+      return;
+    }
+
+    const asRecord = item as Record<string, unknown>;
+    const name = toStringOrUndefined(asRecord.name);
+    if (!name) {
+      return;
+    }
+
+    const sets = toWorkoutSets(asRecord.sets);
+    if (sets.length === 0) {
+      return;
+    }
+
+    exercises.push({
+      id: ensureIdentifier('exercise', index, asRecord.id),
+      name,
+      muscleGroup: toStringOrUndefined(asRecord.muscleGroup),
+      notes: toStringOrUndefined(asRecord.notes),
+      sets,
+      seriesCount: sets.length
+    });
+  });
+
+  return exercises;
+};
+
+const createWorkoutClassConverter = (): FirestoreDataConverter<WorkoutClass> => ({
   toFirestore() {
     throw new Error('Serialization is not supported on the client.');
   },
   fromFirestore(snapshot) {
     const data: DocumentData = snapshot.data();
+    const exercises = toWorkoutExercises(data.exercises);
+    const totalSets = exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
+
     return {
       id: snapshot.id,
       name: toStringOrUndefined(data.name) ?? 'Treino sem nome',
       focus: toStringOrUndefined(data.focus),
-      difficulty: toStringOrUndefined(data.difficulty),
-      exerciseCount: toNumberOrUndefined(data.exerciseCount),
-      estimatedDuration: toStringOrUndefined(data.estimatedDuration),
-      summary: toStringOrUndefined(data.summary)
-    };
+      scheduledFor: toIsoDate(data.scheduledFor),
+      notes: toStringOrUndefined(data.notes),
+      exercises,
+      exerciseCount: exercises.length,
+      totalSets,
+      createdAt: toIsoDate(data.createdAt),
+      updatedAt: toIsoDate(data.updatedAt)
+    } satisfies WorkoutClass;
   }
 });
 
@@ -200,24 +343,71 @@ export async function fetchExerciseClasses(): Promise<ExerciseClass[]> {
   return fetchOrderedUserCollection('exerciseClasses', 'createdAt', createExerciseClassConverter());
 }
 
-export async function fetchWorkouts(): Promise<Workout[]> {
-  return fetchOrderedUserCollection('workouts', 'createdAt', createWorkoutConverter());
+const sanitizeWorkoutSetInput = (
+  set: WorkoutSetInput,
+  exerciseLabel: string,
+  index: number
+): WorkoutSet => {
+  const weightKg = toFiniteNumber(set.weightKg);
+  const repetitions = toInteger(set.repetitions);
+
+  if (typeof weightKg !== 'number' || typeof repetitions !== 'number') {
+    throw new Error(`Informe peso e repetições válidos para a série ${index + 1} de ${exerciseLabel}.`);
+  }
+
+  return {
+    id: ensureIdentifier('set', index, set.id),
+    order: index + 1,
+    weightKg,
+    repetitions
+  } satisfies WorkoutSet;
+};
+
+const sanitizeWorkoutExerciseInput = (
+  exercise: WorkoutExerciseInput,
+  index: number
+): WorkoutExercise => {
+  const name = sanitizeOptionalString(exercise.name);
+  if (!name) {
+    throw new Error(`Informe um nome para o exercício ${index + 1}.`);
+  }
+
+  if (!Array.isArray(exercise.sets) || exercise.sets.length === 0) {
+    throw new Error(`Adicione ao menos uma série para o exercício "${name}".`);
+  }
+
+  const sets = exercise.sets.map((set, setIndex) => sanitizeWorkoutSetInput(set, name, setIndex));
+
+  return {
+    id: ensureIdentifier('exercise', index, exercise.id),
+    name,
+    muscleGroup: sanitizeOptionalString(exercise.muscleGroup),
+    notes: sanitizeOptionalString(exercise.notes),
+    sets,
+    seriesCount: sets.length
+  } satisfies WorkoutExercise;
+};
+
+export async function fetchWorkoutClasses(): Promise<WorkoutClass[]> {
+  return fetchOrderedUserCollection('workouts', 'createdAt', createWorkoutClassConverter());
 }
 
-export async function createWorkout(input: NewWorkoutInput): Promise<Workout> {
+export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<WorkoutClass> {
   const name = sanitizeOptionalString(input.name);
   if (!name) {
     throw new Error('Informe um nome para o treino.');
   }
 
+  if (!Array.isArray(input.exercises) || input.exercises.length === 0) {
+    throw new Error('Cadastre ao menos um exercício para o treino.');
+  }
+
   const focus = sanitizeOptionalString(input.focus);
-  const difficulty = sanitizeOptionalString(input.difficulty);
-  const estimatedDuration = sanitizeOptionalString(input.estimatedDuration);
-  const summary = sanitizeOptionalString(input.summary);
-  const exerciseCount =
-    typeof input.exerciseCount === 'number' && Number.isFinite(input.exerciseCount)
-      ? input.exerciseCount
-      : undefined;
+  const notes = sanitizeOptionalString(input.notes);
+  const scheduledFor = sanitizeOptionalString(input.scheduledFor);
+
+  const exercises = input.exercises.map(sanitizeWorkoutExerciseInput);
+  const totalSets = exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
 
   const uid = await requireUid();
   const db = getDb();
@@ -225,10 +415,23 @@ export async function createWorkout(input: NewWorkoutInput): Promise<Workout> {
   const docRef = await addDoc(workoutsCollection, {
     name,
     ...(focus ? { focus } : {}),
-    ...(difficulty ? { difficulty } : {}),
-    ...(typeof exerciseCount === 'number' ? { exerciseCount } : {}),
-    ...(estimatedDuration ? { estimatedDuration } : {}),
-    ...(summary ? { summary } : {}),
+    ...(notes ? { notes } : {}),
+    ...(scheduledFor ? { scheduledFor } : {}),
+    exercises: exercises.map((exercise) => ({
+      id: exercise.id,
+      name: exercise.name,
+      ...(exercise.muscleGroup ? { muscleGroup: exercise.muscleGroup } : {}),
+      ...(exercise.notes ? { notes: exercise.notes } : {}),
+      sets: exercise.sets.map((set) => ({
+        id: set.id,
+        order: set.order,
+        weightKg: set.weightKg,
+        repetitions: set.repetitions
+      })),
+      seriesCount: exercise.seriesCount
+    })),
+    exerciseCount: exercises.length,
+    totalSets,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
@@ -237,11 +440,12 @@ export async function createWorkout(input: NewWorkoutInput): Promise<Workout> {
     id: docRef.id,
     name,
     focus,
-    difficulty,
-    exerciseCount,
-    estimatedDuration,
-    summary
-  };
+    scheduledFor: scheduledFor ?? undefined,
+    notes,
+    exercises,
+    exerciseCount: exercises.length,
+    totalSets
+  } satisfies WorkoutClass;
 }
 
 export async function fetchExercises(): Promise<Exercise[]> {
