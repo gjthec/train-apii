@@ -15,6 +15,47 @@ import {
 } from '@/lib/api';
 import styles from '@/styles/Workouts.module.css';
 
+const toSortableNumber = (value?: string): number => {
+  if (!value) {
+    return 0;
+  }
+
+  const parsed = Date.parse(value);
+  if (!Number.isNaN(parsed)) {
+    return parsed;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return Number.parseInt(value.replace(/-/g, ''), 10);
+  }
+
+  return 0;
+};
+
+const sortWorkoutsByDate = (items: WorkoutClass[]): WorkoutClass[] => {
+  return [...items].sort((a, b) => {
+    const aValue =
+      toSortableNumber(a.scheduledFor) || toSortableNumber(a.updatedAt) || toSortableNumber(a.createdAt);
+    const bValue =
+      toSortableNumber(b.scheduledFor) || toSortableNumber(b.updatedAt) || toSortableNumber(b.createdAt);
+
+    return bValue - aValue;
+  });
+};
+
+const formatScheduleForMessage = (value: string): string => {
+  const parsed = new Date(`${value}T00:00:00`);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  return value;
+};
+
 export default function WorkoutsPage() {
   const [workouts, setWorkouts] = useState<WorkoutClass[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,6 +63,7 @@ export default function WorkoutsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroupClass[]>([]);
   const [muscleGroupError, setMuscleGroupError] = useState<string | null>(null);
+  const [prefillRequest, setPrefillRequest] = useState<{ workout: WorkoutClass; token: number } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,7 +72,7 @@ export default function WorkoutsPage() {
       try {
         const data = await fetchWorkoutClasses();
         if (!isMounted) return;
-        setWorkouts(data);
+        setWorkouts(sortWorkoutsByDate(data));
         setError(null);
       } catch (err) {
         if (!isMounted) return;
@@ -70,8 +112,12 @@ export default function WorkoutsPage() {
 
     try {
       const newWorkout = await createWorkoutClass(input);
-      setWorkouts((previous) => [newWorkout, ...previous]);
-      setSuccessMessage('Treino do dia cadastrado com sucesso!');
+      setWorkouts((previous) => sortWorkoutsByDate([newWorkout, ...previous]));
+      if (newWorkout.scheduledFor) {
+        setSuccessMessage(`Treino registrado para ${formatScheduleForMessage(newWorkout.scheduledFor)}.`);
+      } else {
+        setSuccessMessage('Treino registrado com sucesso.');
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível salvar o treino.';
       setError(message);
@@ -79,6 +125,20 @@ export default function WorkoutsPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleReuseWorkout = (workout: WorkoutClass) => {
+    setPrefillRequest({ workout, token: Date.now() });
+    setSuccessMessage(null);
+    setError(null);
+
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleClearPrefill = () => {
+    setPrefillRequest(null);
   };
 
   return (
@@ -92,12 +152,18 @@ export default function WorkoutsPage() {
           isSubmitting={isSubmitting}
           muscleGroups={muscleGroups}
           muscleGroupError={muscleGroupError}
+          prefillRequest={prefillRequest}
+          onClearPrefill={handleClearPrefill}
         />
         {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
         {error ? <p className={styles.error}>{error}</p> : null}
       </section>
       <section>
-        <WorkoutClassList classes={workouts} emptyLabel="Nenhum treino cadastrado." />
+        <WorkoutClassList
+          classes={workouts}
+          emptyLabel="Nenhum treino cadastrado."
+          onDuplicate={handleReuseWorkout}
+        />
       </section>
     </Layout>
   );

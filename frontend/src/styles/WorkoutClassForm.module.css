@@ -36,6 +36,54 @@
   gap: 1.75rem;
 }
 
+.prefillBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+}
+
+.prefillBanner strong {
+  display: inline-block;
+  margin-right: 0.25rem;
+}
+
+.prefillActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.clearPrefillButton {
+  align-self: flex-start;
+  background: #ffffff;
+  border: 1px solid #f59e0b;
+  color: #b45309;
+  border-radius: 999px;
+  padding: 0.45rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.clearPrefillButton:hover {
+  background: #fef08a;
+  color: #92400e;
+}
+
+@media (min-width: 640px) {
+  .prefillActions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
 .inlineFields {
   display: grid;
   gap: 1.25rem;

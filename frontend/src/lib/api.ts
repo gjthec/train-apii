@@ -96,6 +96,29 @@ const sanitizeOptionalString = (value: string | undefined): string | undefined =
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const formatDateForInput = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const resolveScheduledForDate = (value?: string): string => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) {
+      return formatDateForInput(parsed);
+    }
+  }
+
+  return formatDateForInput(new Date());
+};
+
 export interface ExerciseClass {
   id: string;
   name: string;
@@ -435,7 +458,7 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
 
   const focus = sanitizeOptionalString(input.focus);
   const notes = sanitizeOptionalString(input.notes);
-  const scheduledFor = sanitizeOptionalString(input.scheduledFor);
+  const scheduledFor = resolveScheduledForDate(input.scheduledFor);
 
   const exercises = input.exercises.map(sanitizeWorkoutExerciseInput);
   const totalSets = exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
@@ -447,7 +470,7 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
     name,
     ...(focus ? { focus } : {}),
     ...(notes ? { notes } : {}),
-    ...(scheduledFor ? { scheduledFor } : {}),
+    scheduledFor,
     exercises: exercises.map((exercise) => ({
       id: exercise.id,
       name: exercise.name,
@@ -471,7 +494,7 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
     id: docRef.id,
     name,
     focus,
-    scheduledFor: scheduledFor ?? undefined,
+    scheduledFor,
     notes,
     exercises,
     exerciseCount: exercises.length,

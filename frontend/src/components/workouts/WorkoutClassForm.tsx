@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import type { MuscleGroupClass, NewWorkoutClassInput } from '@/lib/api';
+import { useEffect, useMemo, useState } from 'react';
+import type { MuscleGroupClass, NewWorkoutClassInput, WorkoutClass } from '@/lib/api';
 import styles from '@/styles/WorkoutClassForm.module.css';
 import WorkoutExerciseFields from './WorkoutExerciseFields';
 import type {
@@ -16,6 +16,11 @@ interface WorkoutClassFormProps {
   isSubmitting: boolean;
   muscleGroups: readonly MuscleGroupClass[];
   muscleGroupError?: string | null;
+  prefillRequest?: {
+    workout: WorkoutClass;
+    token: number;
+  } | null;
+  onClearPrefill?: () => void;
 }
 
 type TextInputEvent = { target: { value: string } };
@@ -26,6 +31,30 @@ const generateLocalId = (prefix: string): string => {
   }
 
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const formatDateForInput = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayInputValue = (): string => formatDateForInput(new Date());
+
+const normalizeDateInput = (value: string | undefined): string => {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return formatDateForInput(parsed);
+    }
+  }
+
+  return getTodayInputValue();
 };
 
 const createEmptySet = (): WorkoutSetDraft => ({
@@ -45,7 +74,7 @@ const createEmptyExercise = (): WorkoutExerciseDraft => ({
 const createInitialState = (): WorkoutClassFormState => ({
   name: '',
   focus: '',
-  scheduledFor: '',
+  scheduledFor: getTodayInputValue(),
   notes: '',
   exercises: [createEmptyExercise()]
 });
@@ -56,15 +85,82 @@ const toNumberOrUndefined = (value: string, isInteger = false): number | undefin
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+const createStateFromWorkout = (workout: WorkoutClass): WorkoutClassFormState => {
+  const exercises = workout.exercises.length > 0 ? workout.exercises : [
+    {
+      id: generateLocalId('exercise'),
+      name: '',
+      muscleGroup: '',
+      notes: '',
+      sets: []
+    }
+  ];
+
+  return {
+    name: workout.name ?? '',
+    focus: workout.focus ?? '',
+    scheduledFor: getTodayInputValue(),
+    notes: workout.notes ?? '',
+    exercises: exercises.map((exercise) => ({
+      id: exercise.id ?? generateLocalId('exercise'),
+      name: exercise.name,
+      muscleGroup: exercise.muscleGroup ?? '',
+      notes: exercise.notes ?? '',
+      sets:
+        exercise.sets.length > 0
+          ? exercise.sets.map((set) => ({
+              id: set.id ?? generateLocalId('set'),
+              weight: Number.isFinite(set.weightKg) ? `${set.weightKg}` : '',
+              repetitions: Number.isFinite(set.repetitions) ? `${set.repetitions}` : ''
+            }))
+          : [createEmptySet()]
+    }))
+  };
+};
+
 export default function WorkoutClassForm({
   onSubmit,
   isSubmitting,
   muscleGroups,
-  muscleGroupError
+  muscleGroupError,
+  prefillRequest,
+  onClearPrefill
 }: WorkoutClassFormProps) {
   const [formState, setFormState] = useState<WorkoutClassFormState>(() => createInitialState());
+  const activePrefill = prefillRequest?.workout;
   const exercisesCount = formState.exercises.length;
   const hasMuscleGroups = muscleGroups.length > 0;
+
+  useEffect(() => {
+    if (!prefillRequest) {
+      return;
+    }
+
+    setFormState(createStateFromWorkout(prefillRequest.workout));
+  }, [prefillRequest]);
+
+  const prefillDateLabel = useMemo(() => {
+    if (!activePrefill?.scheduledFor) {
+      return null;
+    }
+
+    const normalized = normalizeDateInput(activePrefill.scheduledFor);
+    const parsed = new Date(`${normalized}T00:00:00`);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    return normalized;
+  }, [activePrefill?.scheduledFor]);
+
+  const handleClearPrefillClick = () => {
+    setFormState(createInitialState());
+    onClearPrefill?.();
+  };
 
   const handleRootFieldChange = (field: 'name' | 'focus' | 'scheduledFor' | 'notes') =>
     (event: TextInputEvent) => {
@@ -154,7 +250,7 @@ export default function WorkoutClassForm({
     const payload: NewWorkoutClassInput = {
       name: formState.name,
       focus: formState.focus,
-      scheduledFor: formState.scheduledFor,
+      scheduledFor: normalizeDateInput(formState.scheduledFor),
       notes: formState.notes,
       exercises: formState.exercises.map((exercise) => ({
         id: exercise.id,
@@ -172,6 +268,7 @@ export default function WorkoutClassForm({
     try {
       await onSubmit(payload);
       setFormState(createInitialState());
+      onClearPrefill?.();
     } catch (error) {
       // O estado de erro é tratado pelo componente pai.
     }
@@ -188,6 +285,20 @@ export default function WorkoutClassForm({
           {exercisesCount} {exercisesCount === 1 ? 'exercício' : 'exercícios'}
         </span>
       </header>
+      {activePrefill ? (
+        <div className={styles.prefillBanner}>
+          <div>
+            <strong>Treino base carregado:</strong> {activePrefill.name}
+            {prefillDateLabel ? ` (${prefillDateLabel})` : ''}
+          </div>
+          <div className={styles.prefillActions}>
+            <span>Atualize as cargas e escolha a data para registrar um novo dia.</span>
+            <button type="button" className={styles.clearPrefillButton} onClick={handleClearPrefillClick}>
+              Limpar formulário
+            </button>
+          </div>
+        </div>
+      ) : null}
       {muscleGroupError ? <p className={styles.inlineError}>{muscleGroupError}</p> : null}
       {!hasMuscleGroups ? (
         <p className={styles.supportMessage}>

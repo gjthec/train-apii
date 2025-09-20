@@ -7,6 +7,7 @@ import styles from '@/styles/WorkoutClassList.module.css';
 interface WorkoutClassListProps {
   classes: WorkoutClass[];
   emptyLabel: string;
+  onDuplicate?: (workout: WorkoutClass) => void;
 }
 
 const formatDate = (value?: string): string | undefined => {
@@ -31,7 +32,7 @@ const weightFormatter = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 0
 });
 
-export default function WorkoutClassList({ classes, emptyLabel }: WorkoutClassListProps) {
+export default function WorkoutClassList({ classes, emptyLabel, onDuplicate }: WorkoutClassListProps) {
   return (
     <ResourceList
       items={classes}
@@ -58,6 +59,17 @@ export default function WorkoutClassList({ classes, emptyLabel }: WorkoutClassLi
               </div>
             </header>
             {workout.notes ? <p className={styles.notes}>{workout.notes}</p> : null}
+            {onDuplicate ? (
+              <div className={styles.cardActions}>
+                <button
+                  type="button"
+                  className={styles.duplicateButton}
+                  onClick={() => onDuplicate(workout)}
+                >
+                  Registrar novo dia
+                </button>
+              </div>
+            ) : null}
             <div className={styles.exerciseGrid}>
               {workout.exercises.map((exercise) => (
                 <section key={exercise.id} className={styles.exerciseCard}>
