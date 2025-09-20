@@ -4,7 +4,7 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import WorkoutClassForm from '@/components/workouts/WorkoutClassForm';
-import WorkoutClassList from '@/components/workouts/WorkoutClassList';
+import WorkoutHistoryByDate from '@/components/workouts/WorkoutHistoryByDate';
 import {
   createWorkoutClass,
   fetchMuscleGroupClasses,
@@ -159,7 +159,7 @@ export default function WorkoutsPage() {
         {error ? <p className={styles.error}>{error}</p> : null}
       </section>
       <section>
-        <WorkoutClassList
+        <WorkoutHistoryByDate
           classes={workouts}
           emptyLabel="Nenhum treino cadastrado."
           onDuplicate={handleReuseWorkout}
