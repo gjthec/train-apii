@@ -1,11 +1,12 @@
 import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import type { Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import type { Auth, User } from 'firebase/auth';
+import { doc, getFirestore, serverTimestamp, setDoc, type Firestore } from 'firebase/firestore';
 
 export type FirebaseConfig = Pick<FirebaseOptions, 'apiKey' | 'authDomain' | 'projectId' | 'storageBucket' | 'messagingSenderId' | 'appId' | 'measurementId'>;
 
 let app: FirebaseApp | null = null;
+let lastSyncedProfileUid: string | null = null;
 
 function readFirebaseConfig(): FirebaseConfig {
   const config: FirebaseConfig = {
@@ -54,14 +55,50 @@ export async function getClientAuth(): Promise<Auth> {
   return getAuth(getFirebaseApp());
 }
 
+const dedupeProviderIds = (user: User): string[] => {
+  const providerIds = user.providerData
+    .map((info) => info?.providerId)
+    .filter((providerId): providerId is string => Boolean(providerId));
+  return Array.from(new Set(providerIds));
+};
+
+async function syncUserProfile(user: User): Promise<void> {
+  if (lastSyncedProfileUid === user.uid) {
+    return;
+  }
+
+  const db = getDb();
+  const profileRef = doc(db, 'users', user.uid);
+  await setDoc(
+    profileRef,
+    {
+      displayName: user.displayName ?? null,
+      email: user.email ?? null,
+      photoURL: user.photoURL ?? null,
+      providerIds: dedupeProviderIds(user),
+      isAnonymous: user.isAnonymous,
+      createdAt: user.metadata?.creationTime ?? null,
+      lastSignInAt: user.metadata?.lastSignInTime ?? null,
+      lastLoginAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
+
+  lastSyncedProfileUid = user.uid;
+}
+
 export async function requireUid(): Promise<string> {
   if (typeof window === 'undefined') {
     throw new Error('requireUid can only be called in the browser.');
   }
 
-  const { browserLocalPersistence, onAuthStateChanged, setPersistence, signInAnonymously } = await import(
-    'firebase/auth'
-  );
+  const {
+    browserLocalPersistence,
+    onAuthStateChanged,
+    setPersistence,
+    signInAnonymously
+  } = await import('firebase/auth');
 
   const auth = await getClientAuth();
   await setPersistence(auth, browserLocalPersistence);
@@ -79,6 +116,7 @@ export async function requireUid(): Promise<string> {
   }
 
   if (auth.currentUser?.uid) {
+    await syncUserProfile(auth.currentUser);
     return auth.currentUser.uid;
   }
 
@@ -88,6 +126,9 @@ export async function requireUid(): Promise<string> {
       (user) => {
         unsubscribe();
         if (user?.uid) {
+          void syncUserProfile(user).catch((error) => {
+            console.error('Failed to sync user profile', error);
+          });
           resolve(user.uid);
         } else {
           reject(new Error('User is not signed in.'));
@@ -99,4 +140,90 @@ export async function requireUid(): Promise<string> {
       }
     );
   });
+}
+
+export interface AuthenticatedUserProfile {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  providerIds: string[];
+  isAnonymous: boolean;
+}
+
+export async function signInWithGoogle(): Promise<AuthenticatedUserProfile> {
+  if (typeof window === 'undefined') {
+    throw new Error('Google sign-in is only available in the browser.');
+  }
+
+  const auth = await getClientAuth();
+  const {
+    browserLocalPersistence,
+    GoogleAuthProvider,
+    linkWithPopup,
+    setPersistence,
+    signInWithPopup
+  } = await import('firebase/auth');
+
+  await setPersistence(auth, browserLocalPersistence);
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  let user: User | null = auth.currentUser ?? null;
+
+  try {
+    if (user && user.isAnonymous) {
+      try {
+        const result = await linkWithPopup(user, provider);
+        user = result.user;
+      } catch (linkError) {
+        const authError = linkError as { code?: string; message?: string } | undefined;
+        if (authError?.code === 'auth/credential-already-in-use') {
+          const result = await signInWithPopup(auth, provider);
+          user = result.user;
+        } else {
+          throw linkError;
+        }
+      }
+    } else {
+      const result = await signInWithPopup(auth, provider);
+      user = result.user;
+    }
+  } catch (error) {
+    const authError = error as { code?: string; message?: string } | undefined;
+    if (authError?.code === 'auth/popup-closed-by-user') {
+      throw new Error('A janela de login foi fechada antes de concluir a autenticação.');
+    }
+    if (authError?.code === 'auth/cancelled-popup-request') {
+      throw new Error('Existe uma solicitação de login em andamento. Tente novamente.');
+    }
+    throw error instanceof Error ? error : new Error('Não foi possível autenticar com o Google.');
+  }
+
+  if (!user) {
+    throw new Error('Não foi possível recuperar as informações do usuário autenticado.');
+  }
+
+  await syncUserProfile(user);
+
+  return {
+    uid: user.uid,
+    displayName: user.displayName,
+    email: user.email,
+    photoURL: user.photoURL,
+    providerIds: dedupeProviderIds(user),
+    isAnonymous: user.isAnonymous
+  };
+}
+
+export async function signOutClient(): Promise<void> {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const auth = await getClientAuth();
+  const { signOut } = await import('firebase/auth');
+  await signOut(auth);
+  lastSyncedProfileUid = null;
 }

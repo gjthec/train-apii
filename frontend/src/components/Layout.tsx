@@ -15,7 +15,8 @@ const navLinks: Array<{ href: string; label: string }> = [
   { href: '/exercise-classes', label: 'Aulas' },
   { href: '/workouts', label: 'Treinos' },
   { href: '/exercises', label: 'Exercícios' },
-  { href: '/sessions', label: 'Sessões' }
+  { href: '/sessions', label: 'Sessões' },
+  { href: '/login', label: 'Login' }
 ];
 
 export default function Layout({ title, description, children }: LayoutProps) {
