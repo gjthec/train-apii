@@ -45,7 +45,8 @@ const sortWorkoutsByDate = (items: WorkoutClass[]): WorkoutClass[] => {
 };
 
 const formatScheduleForMessage = (value: string): string => {
-  const parsed = new Date(`${value}T00:00:00`);
+  const normalized = value.includes('T') ? value : `${value}T00:00:00`;
+  const parsed = new Date(normalized);
   if (!Number.isNaN(parsed.getTime())) {
     return parsed.toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -59,6 +60,12 @@ const formatScheduleForMessage = (value: string): string => {
 
 type WorkoutsPageMode = 'new' | 'existing';
 
+interface SelectChangeEvent {
+  target: {
+    value: string;
+  };
+}
+
 export default function WorkoutsPage() {
   const [workouts, setWorkouts] = useState<WorkoutClass[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,8 +76,16 @@ export default function WorkoutsPage() {
   const [prefillRequest, setPrefillRequest] = useState<{ workout: WorkoutClass; token: number } | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(() => new Set());
   const [mode, setMode] = useState<WorkoutsPageMode>('new');
+  const [selectedExistingId, setSelectedExistingId] = useState<string>('');
 
   const sortedWorkouts = useMemo(() => sortWorkoutsByDate(workouts), [workouts]);
+  const selectedWorkout = useMemo(() => {
+    if (!selectedExistingId) {
+      return null;
+    }
+
+    return sortedWorkouts.find((item) => item.id === selectedExistingId) ?? null;
+  }, [sortedWorkouts, selectedExistingId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -111,6 +126,21 @@ export default function WorkoutsPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (sortedWorkouts.length === 0) {
+      setSelectedExistingId('');
+      return;
+    }
+
+    setSelectedExistingId((previous) => {
+      if (previous && sortedWorkouts.some((item) => item.id === previous)) {
+        return previous;
+      }
+
+      return sortedWorkouts[0]?.id ?? '';
+    });
+  }, [sortedWorkouts]);
 
   const handleCreateWorkout = async (input: NewWorkoutClassInput) => {
     setError(null);
@@ -193,8 +223,30 @@ export default function WorkoutsPage() {
 
   const handleSelectMode = (nextMode: WorkoutsPageMode) => {
     setMode(nextMode);
-    if (nextMode === 'existing' && typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (nextMode === 'existing') {
+      if (sortedWorkouts.length > 0) {
+        setSelectedExistingId((previous) => {
+          if (previous && sortedWorkouts.some((item) => item.id === previous)) {
+            return previous;
+          }
+
+          return sortedWorkouts[0]?.id ?? '';
+        });
+      }
+
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const handleExistingChange = (event: SelectChangeEvent) => {
+    setSelectedExistingId(event.target.value);
+  };
+
+  const handleSelectExisting = () => {
+    if (selectedWorkout) {
+      handleReuseWorkout(selectedWorkout);
     }
   };
 
@@ -259,6 +311,48 @@ export default function WorkoutsPage() {
               conforme necessário.
             </p>
           </header>
+          <div className={styles.existingSelector}>
+            <label className={styles.selectLabel} htmlFor="existing-workout">
+              Treino salvo
+            </label>
+            <div className={styles.selectRow}>
+              <select
+                id="existing-workout"
+                className={styles.selectControl}
+                value={selectedExistingId}
+                onChange={handleExistingChange}
+                disabled={sortedWorkouts.length === 0}
+              >
+                {sortedWorkouts.length === 0 ? (
+                  <option value="">Nenhum treino cadastrado</option>
+                ) : null}
+                {sortedWorkouts.map((item) => {
+                  const labelParts: string[] = [item.name];
+                  if (item.scheduledFor) {
+                    labelParts.push(`Registrado em ${formatScheduleForMessage(item.scheduledFor)}`);
+                  } else if (item.updatedAt) {
+                    labelParts.push(`Atualizado em ${formatScheduleForMessage(item.updatedAt)}`);
+                  } else if (item.createdAt) {
+                    labelParts.push(`Criado em ${formatScheduleForMessage(item.createdAt)}`);
+                  }
+
+                  return (
+                    <option key={item.id} value={item.id}>
+                      {labelParts.join(' — ')}
+                    </option>
+                  );
+                })}
+              </select>
+              <button
+                type="button"
+                className={styles.selectAction}
+                onClick={handleSelectExisting}
+                disabled={!selectedWorkout}
+              >
+                Registrar novo dia
+              </button>
+            </div>
+          </div>
           <WorkoutHistoryByDate
             classes={sortedWorkouts}
             emptyLabel="Nenhum treino cadastrado."
