@@ -1,9 +1,11 @@
+'use client';
+
 import Head from 'next/head';
-import Layout from '@/components/Layout';
 import Link from 'next/link';
+import Layout from '@/components/Layout';
 import styles from '@/styles/Home.module.css';
 
-const cards = [
+const cards: ReadonlyArray<{ href: string; title: string; description: string }> = [
   {
     href: '/exercise-classes',
     title: 'Aulas',
