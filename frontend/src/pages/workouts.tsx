@@ -8,10 +8,12 @@ import WorkoutHistoryByDate from '@/components/workouts/WorkoutHistoryByDate';
 import {
   createExercise,
   createWorkoutClass,
+  deleteExercise,
   deleteWorkoutClass,
   fetchExercises,
   fetchMuscleGroupClasses,
   fetchWorkoutClasses,
+  updateExercise,
   type Exercise,
   type NewExerciseInput,
   type NewWorkoutClassInput,
@@ -234,6 +236,20 @@ export default function WorkoutsPage() {
     return created;
   };
 
+  const handleUpdateExercise = async (exerciseId: string, input: NewExerciseInput): Promise<Exercise> => {
+    const updated = await updateExercise(exerciseId, input);
+    setExercises((previous) =>
+      previous.map((item) => (item.id === updated.id ? updated : item))
+    );
+    setExerciseError(null);
+    return updated;
+  };
+
+  const handleDeleteExerciseFromLibrary = async (exerciseId: string): Promise<void> => {
+    await deleteExercise(exerciseId);
+    setExercises((previous) => previous.filter((item) => item.id !== exerciseId));
+  };
+
   const handleReuseWorkout = (workout: WorkoutClass) => {
     setPrefillRequest({ workout, token: Date.now() });
     setSuccessMessage(null);
@@ -369,6 +385,8 @@ export default function WorkoutsPage() {
             exercises={exercises}
             exerciseError={exerciseError}
             onRegisterExercise={handleRegisterExercise}
+            onUpdateExercise={handleUpdateExercise}
+            onDeleteExercise={handleDeleteExerciseFromLibrary}
             prefillRequest={prefillRequest}
             onClearPrefill={handleClearPrefill}
           />

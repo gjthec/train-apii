@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -814,6 +815,64 @@ export async function createExercise(input: NewExerciseInput): Promise<Exercise>
     repetitions: repetitions ?? undefined,
     rest: rest ?? undefined
   } satisfies Exercise;
+}
+
+export async function updateExercise(
+  exerciseId: string,
+  input: NewExerciseInput
+): Promise<Exercise> {
+  const sanitizedId = sanitizeOptionalString(exerciseId);
+  if (!sanitizedId) {
+    throw new Error('Exercício inválido para edição.');
+  }
+
+  const name = sanitizeOptionalString(input.name);
+  if (!name) {
+    throw new Error('Informe um nome para o exercício.');
+  }
+
+  const muscleGroup = sanitizeOptionalString(input.muscleGroup);
+  const modality = sanitizeOptionalString(input.modality);
+  const description = sanitizeOptionalString(input.description);
+  const equipment = sanitizeOptionalString(input.equipment);
+  const sets = sanitizeOptionalIntegerInput(input.sets);
+  const repetitions = sanitizeOptionalIntegerInput(input.repetitions);
+  const rest = sanitizeOptionalString(input.rest);
+  const uid = await requireUid();
+  const db = getDb();
+  const exerciseRef = doc(db, `users/${uid}/exercises/${sanitizedId}`);
+
+  await updateDoc(exerciseRef, {
+    name,
+    muscleGroup: muscleGroup ?? deleteField(),
+    modality: modality ?? deleteField(),
+    description: description ?? deleteField(),
+    equipment: equipment ?? deleteField(),
+    sets: typeof sets === 'number' ? sets : deleteField(),
+    repetitions: typeof repetitions === 'number' ? repetitions : deleteField(),
+    rest: rest ?? deleteField(),
+    updatedAt: serverTimestamp()
+  });
+
+  const updatedSnapshot = await getDoc(exerciseRef.withConverter(createExerciseConverter()));
+  const data = updatedSnapshot.data();
+  if (!data) {
+    throw new Error('Não foi possível carregar o exercício atualizado.');
+  }
+
+  return data;
+}
+
+export async function deleteExercise(exerciseId: string): Promise<void> {
+  const sanitizedId = sanitizeOptionalString(exerciseId);
+  if (!sanitizedId) {
+    throw new Error('Exercício inválido para exclusão.');
+  }
+
+  const uid = await requireUid();
+  const db = getDb();
+  const exerciseRef = doc(db, `users/${uid}/exercises/${sanitizedId}`);
+  await deleteDoc(exerciseRef);
 }
 
 export async function createMuscleGroupClass(

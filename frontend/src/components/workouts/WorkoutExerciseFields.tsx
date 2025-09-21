@@ -16,6 +16,10 @@ interface WorkoutExerciseFieldsProps {
   onSelectExercise: (exerciseId: string, selectedId: string) => void;
   onSaveExercise: (exerciseId: string) => void;
   isSavingExercise: boolean;
+  onEditLibraryExercise?: (exerciseId: string, libraryExerciseId: string) => void;
+  onDeleteLibraryExercise?: (exerciseId: string, libraryExerciseId: string) => void;
+  isDeletingLibraryExercise?: boolean;
+  isEditingLibraryExercise?: boolean;
   onExerciseFieldChange: (exerciseId: string, field: 'name' | 'muscleGroup' | 'notes', value: string) => void;
   onSetFieldChange: (exerciseId: string, setId: string, field: 'weight' | 'repetitions', value: string) => void;
   onAddSet: (exerciseId: string) => void;
@@ -35,6 +39,10 @@ export default function WorkoutExerciseFields({
   onSelectExercise,
   onSaveExercise,
   isSavingExercise,
+  onEditLibraryExercise,
+  onDeleteLibraryExercise,
+  isDeletingLibraryExercise,
+  isEditingLibraryExercise,
   onExerciseFieldChange,
   onSetFieldChange,
   onAddSet,
@@ -50,6 +58,8 @@ export default function WorkoutExerciseFields({
     : 'Cadastre grupos musculares para habilitar';
   const selectDisabled = !hasOptions && !isCustomMuscleGroup;
   const hasLibrarySelection = hasExerciseOptions || Boolean(exercise.libraryExerciseId);
+  const canManageLibraryExercise = Boolean(exercise.libraryExerciseId);
+  const isManagingLibraryExercise = Boolean(isEditingLibraryExercise || isDeletingLibraryExercise);
 
   return (
     <fieldset className={styles.exerciseCard}>
@@ -72,14 +82,36 @@ export default function WorkoutExerciseFields({
               ))}
             </select>
           </div>
-          <button
-            type="button"
-            className={styles.saveExerciseButton}
-            onClick={() => onSaveExercise(exercise.id)}
-            disabled={isSavingExercise}
-          >
-            {isSavingExercise ? 'Salvando...' : 'Salvar exercício'}
-          </button>
+          <div className={styles.exerciseLibraryActions}>
+            <button
+              type="button"
+              className={styles.saveExerciseButton}
+              onClick={() => onSaveExercise(exercise.id)}
+              disabled={isSavingExercise}
+            >
+              {isSavingExercise ? 'Salvando...' : 'Salvar exercício'}
+            </button>
+            {canManageLibraryExercise ? (
+              <>
+                <button
+                  type="button"
+                  className={styles.editorLinkButton}
+                  onClick={() => onEditLibraryExercise?.(exercise.id, exercise.libraryExerciseId!)}
+                  disabled={isManagingLibraryExercise}
+                >
+                  {isEditingLibraryExercise ? 'Abrindo...' : 'Editar exercício'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.dangerButton}
+                  onClick={() => onDeleteLibraryExercise?.(exercise.id, exercise.libraryExerciseId!)}
+                  disabled={isManagingLibraryExercise}
+                >
+                  {isDeletingLibraryExercise ? 'Excluindo...' : 'Excluir'}
+                </button>
+              </>
+            ) : null}
+          </div>
         </div>
       ) : (
         <div className={styles.saveExerciseFallback}>

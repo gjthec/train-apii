@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import type {
   Exercise,
   MuscleGroupClass,
@@ -25,6 +25,8 @@ interface WorkoutClassFormProps {
   exercises: readonly Exercise[];
   exerciseError?: string | null;
   onRegisterExercise: (input: NewExerciseInput) => Promise<Exercise>;
+  onUpdateExercise: (exerciseId: string, input: NewExerciseInput) => Promise<Exercise>;
+  onDeleteExercise: (exerciseId: string) => Promise<void>;
   prefillRequest?: {
     workout: WorkoutClass;
     token: number;
@@ -33,6 +35,24 @@ interface WorkoutClassFormProps {
 }
 
 type TextInputEvent = { target: { value: string } };
+
+type ExerciseEditorField =
+  | 'name'
+  | 'muscleGroup'
+  | 'modality'
+  | 'description'
+  | 'equipment'
+  | 'sets'
+  | 'repetitions'
+  | 'rest';
+
+type ExerciseEditorValues = Record<ExerciseEditorField, string>;
+
+interface ExerciseEditorState {
+  formExerciseId: string;
+  libraryExerciseId: string;
+  values: ExerciseEditorValues;
+}
 
 const generateLocalId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -132,6 +152,17 @@ const createStateFromWorkout = (workout: WorkoutClass): WorkoutClassFormState =>
   };
 };
 
+const createEditorValuesFromExercise = (exercise: Exercise): ExerciseEditorValues => ({
+  name: exercise.name ?? '',
+  muscleGroup: exercise.muscleGroup ?? '',
+  modality: exercise.modality ?? '',
+  description: exercise.description ?? '',
+  equipment: exercise.equipment ?? '',
+  sets: typeof exercise.sets === 'number' ? `${exercise.sets}` : '',
+  repetitions: typeof exercise.repetitions === 'number' ? `${exercise.repetitions}` : '',
+  rest: exercise.rest ?? ''
+});
+
 export default function WorkoutClassForm({
   onSubmit,
   isSubmitting,
@@ -140,6 +171,8 @@ export default function WorkoutClassForm({
   exercises,
   exerciseError,
   onRegisterExercise,
+  onUpdateExercise,
+  onDeleteExercise,
   prefillRequest,
   onClearPrefill
 }: WorkoutClassFormProps) {
@@ -150,6 +183,12 @@ export default function WorkoutClassForm({
   const hasExerciseOptions = exercises.length > 0;
   const [savingExerciseIds, setSavingExerciseIds] = useState<Set<string>>(() => new Set());
   const [exerciseLibraryError, setExerciseLibraryError] = useState<string | null>(null);
+  const [exerciseLibrarySuccess, setExerciseLibrarySuccess] = useState<string | null>(null);
+  const [exerciseEditor, setExerciseEditor] = useState<ExerciseEditorState | null>(null);
+  const [isUpdatingLibraryExercise, setIsUpdatingLibraryExercise] = useState(false);
+  const [deletingLibraryExerciseIds, setDeletingLibraryExerciseIds] = useState<Set<string>>(
+    () => new Set()
+  );
 
   useEffect(() => {
     if (!prefillRequest) {
@@ -157,7 +196,38 @@ export default function WorkoutClassForm({
     }
 
     setFormState(createStateFromWorkout(prefillRequest.workout));
+    setExerciseEditor(null);
+    setExerciseLibrarySuccess(null);
   }, [prefillRequest]);
+
+  useEffect(() => {
+    if (!exerciseEditor) {
+      return;
+    }
+
+    const latest = exercises.find((item) => item.id === exerciseEditor.libraryExerciseId);
+    if (!latest) {
+      setExerciseEditor(null);
+      return;
+    }
+
+    setExerciseEditor((prev) => {
+      if (!prev || prev.libraryExerciseId !== latest.id) {
+        return prev;
+      }
+
+      const nextValues = createEditorValuesFromExercise(latest);
+      const hasChanged = (Object.keys(nextValues) as ExerciseEditorField[]).some(
+        (field) => prev.values[field] !== nextValues[field]
+      );
+
+      if (!hasChanged) {
+        return prev;
+      }
+
+      return { ...prev, values: nextValues };
+    });
+  }, [exercises, exerciseEditor]);
 
   useEffect(() => {
     setFormState((prev) => {
@@ -292,6 +362,7 @@ export default function WorkoutClassForm({
     }
 
     setExerciseLibraryError(null);
+    setExerciseLibrarySuccess(null);
     setSavingExerciseIds((prev) => new Set(prev).add(exerciseId));
 
     try {
@@ -313,6 +384,7 @@ export default function WorkoutClassForm({
             : item
         )
       }));
+      setExerciseLibrarySuccess('Exercício salvo na biblioteca.');
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Não foi possível salvar o exercício na biblioteca.';
@@ -321,6 +393,137 @@ export default function WorkoutClassForm({
       setSavingExerciseIds((prev) => {
         const next = new Set(prev);
         next.delete(exerciseId);
+        return next;
+      });
+    }
+  };
+
+  const handleOpenExerciseEditor = (formExerciseId: string, libraryExerciseId: string) => {
+    const selected = exercises.find((item) => item.id === libraryExerciseId);
+    if (!selected) {
+      setExerciseLibraryError('O exercício selecionado não está disponível.');
+      return;
+    }
+
+    setExerciseLibraryError(null);
+    setExerciseLibrarySuccess(null);
+    setExerciseEditor({
+      formExerciseId,
+      libraryExerciseId,
+      values: createEditorValuesFromExercise(selected)
+    });
+  };
+
+  const handleCloseExerciseEditor = () => {
+    setExerciseEditor(null);
+  };
+
+  const handleExerciseEditorFieldChange = (field: ExerciseEditorField, value: string) => {
+    setExerciseEditor((prev) => (prev ? { ...prev, values: { ...prev.values, [field]: value } } : prev));
+  };
+
+  const handleExerciseEditorSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!exerciseEditor) {
+      return;
+    }
+
+    const { libraryExerciseId, values } = exerciseEditor;
+    const trimmedName = values.name.trim();
+    if (!trimmedName) {
+      setExerciseLibraryError('Informe um nome para atualizar o exercício.');
+      return;
+    }
+
+    setExerciseLibraryError(null);
+    setExerciseLibrarySuccess(null);
+    setIsUpdatingLibraryExercise(true);
+
+    const sanitizeInput = (value: string): string | undefined => {
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : undefined;
+    };
+
+    try {
+      const updated = await onUpdateExercise(libraryExerciseId, {
+        name: trimmedName,
+        muscleGroup: sanitizeInput(values.muscleGroup),
+        modality: sanitizeInput(values.modality),
+        description: sanitizeInput(values.description),
+        equipment: sanitizeInput(values.equipment),
+        sets: sanitizeInput(values.sets),
+        repetitions: sanitizeInput(values.repetitions),
+        rest: sanitizeInput(values.rest)
+      });
+
+      setFormState((prev) => ({
+        ...prev,
+        exercises: prev.exercises.map((exercise) =>
+          exercise.libraryExerciseId === updated.id
+            ? {
+                ...exercise,
+                name: updated.name,
+                muscleGroup: updated.muscleGroup ?? ''
+              }
+            : exercise
+        )
+      }));
+
+      setExerciseEditor((prev) =>
+        prev && prev.libraryExerciseId === updated.id
+          ? { ...prev, values: createEditorValuesFromExercise(updated) }
+          : prev
+      );
+
+      setExerciseLibrarySuccess('Exercício atualizado com sucesso.');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Não foi possível atualizar o exercício.';
+      setExerciseLibraryError(message);
+    } finally {
+      setIsUpdatingLibraryExercise(false);
+    }
+  };
+
+  const handleDeleteLibraryExercise = async (_formExerciseId: string, libraryExerciseId: string) => {
+    if (!libraryExerciseId) {
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm(
+        'Deseja realmente remover este exercício cadastrado? Ele deixará de aparecer na lista para novos treinos.'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setExerciseLibraryError(null);
+    setExerciseLibrarySuccess(null);
+    setDeletingLibraryExerciseIds((prev) => new Set(prev).add(libraryExerciseId));
+
+    try {
+      await onDeleteExercise(libraryExerciseId);
+      setFormState((prev) => ({
+        ...prev,
+        exercises: prev.exercises.map((exercise) =>
+          exercise.libraryExerciseId === libraryExerciseId
+            ? { ...exercise, libraryExerciseId: null }
+            : exercise
+        )
+      }));
+
+      setExerciseEditor((prev) => (prev && prev.libraryExerciseId === libraryExerciseId ? null : prev));
+      setExerciseLibrarySuccess('Exercício removido da biblioteca.');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Não foi possível remover o exercício da biblioteca.';
+      setExerciseLibraryError(message);
+    } finally {
+      setDeletingLibraryExerciseIds((prev) => {
+        const next = new Set(prev);
+        next.delete(libraryExerciseId);
         return next;
       });
     }
@@ -415,6 +618,9 @@ export default function WorkoutClassForm({
     try {
       await onSubmit(payload);
       setFormState(createInitialState());
+      setExerciseEditor(null);
+      setExerciseLibrarySuccess(null);
+      setExerciseLibraryError(null);
       onClearPrefill?.();
     } catch (error) {
       // O estado de erro é tratado pelo componente pai.
@@ -449,11 +655,143 @@ export default function WorkoutClassForm({
       {muscleGroupError ? <p className={styles.inlineError}>{muscleGroupError}</p> : null}
       {exerciseError ? <p className={styles.inlineError}>{exerciseError}</p> : null}
       {exerciseLibraryError ? <p className={styles.inlineError}>{exerciseLibraryError}</p> : null}
+      {exerciseLibrarySuccess ? <p className={styles.inlineSuccess}>{exerciseLibrarySuccess}</p> : null}
       {!hasMuscleGroups ? (
         <p className={styles.supportMessage}>
           Cadastre os grupos musculares em <Link href="/muscle-groups">Grupos musculares</Link> para
           habilitar a seleção durante o cadastro dos exercícios.
         </p>
+      ) : null}
+      {exerciseEditor ? (
+        <form className={styles.exerciseEditor} onSubmit={handleExerciseEditorSubmit}>
+          <div className={styles.exerciseEditorHeader}>
+            <div>
+              <h3>Editar exercício cadastrado</h3>
+              <p>Atualize as informações para reutilizar este exercício em outros treinos.</p>
+            </div>
+            <button type="button" className={styles.editorCloseButton} onClick={handleCloseExerciseEditor}>
+              Fechar
+            </button>
+          </div>
+          <div className={styles.exerciseEditorGrid}>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="editor-name">Nome *</label>
+              <input
+                id="editor-name"
+                value={exerciseEditor.values.name}
+                onChange={(event: TextInputEvent) =>
+                  handleExerciseEditorFieldChange('name', event.target.value)
+                }
+                required
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="editor-muscle">Grupo muscular</label>
+              <input
+                id="editor-muscle"
+                value={exerciseEditor.values.muscleGroup}
+                onChange={(event: TextInputEvent) =>
+                  handleExerciseEditorFieldChange('muscleGroup', event.target.value)
+                }
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="editor-modality">Modalidade</label>
+              <input
+                id="editor-modality"
+                value={exerciseEditor.values.modality}
+                onChange={(event: TextInputEvent) =>
+                  handleExerciseEditorFieldChange('modality', event.target.value)
+                }
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="editor-equipment">Equipamento</label>
+              <input
+                id="editor-equipment"
+                value={exerciseEditor.values.equipment}
+                onChange={(event: TextInputEvent) =>
+                  handleExerciseEditorFieldChange('equipment', event.target.value)
+                }
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="editor-description">Descrição</label>
+              <input
+                id="editor-description"
+                value={exerciseEditor.values.description}
+                onChange={(event: TextInputEvent) =>
+                  handleExerciseEditorFieldChange('description', event.target.value)
+                }
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="editor-sets">Séries</label>
+              <input
+                id="editor-sets"
+                inputMode="numeric"
+                value={exerciseEditor.values.sets}
+                onChange={(event: TextInputEvent) =>
+                  handleExerciseEditorFieldChange('sets', event.target.value)
+                }
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="editor-repetitions">Repetições</label>
+              <input
+                id="editor-repetitions"
+                inputMode="numeric"
+                value={exerciseEditor.values.repetitions}
+                onChange={(event: TextInputEvent) =>
+                  handleExerciseEditorFieldChange('repetitions', event.target.value)
+                }
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="editor-rest">Descanso</label>
+              <input
+                id="editor-rest"
+                value={exerciseEditor.values.rest}
+                onChange={(event: TextInputEvent) =>
+                  handleExerciseEditorFieldChange('rest', event.target.value)
+                }
+              />
+            </div>
+          </div>
+          <div className={styles.exerciseEditorActions}>
+            <button
+              type="button"
+              className={styles.dangerButton}
+              onClick={() =>
+                handleDeleteLibraryExercise(exerciseEditor.formExerciseId, exerciseEditor.libraryExerciseId)
+              }
+              disabled={
+                deletingLibraryExerciseIds.has(exerciseEditor.libraryExerciseId) || isUpdatingLibraryExercise
+              }
+            >
+              {deletingLibraryExerciseIds.has(exerciseEditor.libraryExerciseId)
+                ? 'Excluindo...'
+                : 'Excluir exercício'}
+            </button>
+            <div className={styles.exerciseEditorPrimaryActions}>
+              <button
+                type="button"
+                className={styles.editorSecondaryButton}
+                onClick={handleCloseExerciseEditor}
+                disabled={isUpdatingLibraryExercise}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className={styles.editorPrimaryButton}
+                disabled={isUpdatingLibraryExercise}
+              >
+                {isUpdatingLibraryExercise ? 'Salvando alterações...' : 'Salvar alterações'}
+              </button>
+            </div>
+          </div>
+        </form>
       ) : null}
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.inlineFields}>
@@ -515,6 +853,16 @@ export default function WorkoutClassForm({
               onSelectExercise={handleSelectExerciseFromLibrary}
               onSaveExercise={handleSaveExerciseToLibrary}
               isSavingExercise={savingExerciseIds.has(exercise.id)}
+              onEditLibraryExercise={handleOpenExerciseEditor}
+              onDeleteLibraryExercise={handleDeleteLibraryExercise}
+              isDeletingLibraryExercise={
+                exercise.libraryExerciseId
+                  ? deletingLibraryExerciseIds.has(exercise.libraryExerciseId)
+                  : false
+              }
+              isEditingLibraryExercise={
+                exercise.libraryExerciseId === exerciseEditor?.libraryExerciseId && isUpdatingLibraryExercise
+              }
               onExerciseFieldChange={handleExerciseFieldChange}
               onSetFieldChange={handleSetFieldChange}
               onAddSet={handleAddSet}
