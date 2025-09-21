@@ -188,8 +188,11 @@ export interface WorkoutClass {
   id: string;
   name: string;
   focus?: string;
+  difficulty?: string;
   scheduledFor?: IsoDateString;
   notes?: string;
+  summary?: string;
+  estimatedDuration?: string;
   exercises: WorkoutExercise[];
   exerciseCount: number;
   totalSets: number;
