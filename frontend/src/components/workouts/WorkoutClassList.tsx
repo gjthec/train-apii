@@ -208,6 +208,9 @@ function WorkoutCard({ workout, onDuplicate, onDelete, deletingIds }: WorkoutCar
                     <span className={styles.setOrder}>Série {set.order}</span>
                     <span className={styles.setMetric}>{weightFormatter.format(set.weightKg)} kg</span>
                     <span className={styles.setMetric}>{set.repetitions} repetições</span>
+                    {typeof set.rpe === 'number' ? (
+                      <span className={styles.setMetric}>RPE {weightFormatter.format(set.rpe)}</span>
+                    ) : null}
                   </li>
                 ))}
               </ol>

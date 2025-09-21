@@ -21,6 +21,7 @@ interface WorkoutClassFormProps {
     token: number;
   } | null;
   onClearPrefill?: () => void;
+  structureLocked?: boolean;
 }
 
 type TextInputEvent = { target: { value: string } };
@@ -60,7 +61,8 @@ const normalizeDateInput = (value: string | undefined): string => {
 const createEmptySet = (): WorkoutSetDraft => ({
   id: generateLocalId('set'),
   weight: '',
-  repetitions: ''
+  repetitions: '',
+  rpe: ''
 });
 
 const createEmptyExercise = (): WorkoutExerciseDraft => ({
@@ -113,7 +115,8 @@ const createStateFromWorkout = (workout: WorkoutClass): WorkoutClassFormState =>
           ? exercise.sets.map((set) => ({
               id: set.id ?? generateLocalId('set'),
               weight: Number.isFinite(set.weightKg) ? `${set.weightKg}` : '',
-              repetitions: Number.isFinite(set.repetitions) ? `${set.repetitions}` : ''
+              repetitions: Number.isFinite(set.repetitions) ? `${set.repetitions}` : '',
+              rpe: Number.isFinite(set.rpe ?? NaN) ? `${set.rpe}` : ''
             }))
           : [createEmptySet()]
     }))
@@ -126,12 +129,14 @@ export default function WorkoutClassForm({
   muscleGroups,
   muscleGroupError,
   prefillRequest,
-  onClearPrefill
+  onClearPrefill,
+  structureLocked
 }: WorkoutClassFormProps) {
   const [formState, setFormState] = useState<WorkoutClassFormState>(() => createInitialState());
   const activePrefill = prefillRequest?.workout;
   const exercisesCount = formState.exercises.length;
   const hasMuscleGroups = muscleGroups.length > 0;
+  const isStructureLocked = structureLocked ?? Boolean(formState.workoutId);
 
   useEffect(() => {
     if (!prefillRequest) {
@@ -174,6 +179,10 @@ export default function WorkoutClassForm({
     field: 'name' | 'muscleGroup' | 'notes',
     value: string
   ) => {
+    if (isStructureLocked && field !== 'notes') {
+      return;
+    }
+
     setFormState((prev) => ({
       ...prev,
       exercises: prev.exercises.map((exercise) =>
@@ -185,7 +194,7 @@ export default function WorkoutClassForm({
   const handleSetFieldChange = (
     exerciseId: string,
     setId: string,
-    field: 'weight' | 'repetitions',
+    field: 'weight' | 'repetitions' | 'rpe',
     value: string
   ) => {
     setFormState((prev) => ({
@@ -202,6 +211,10 @@ export default function WorkoutClassForm({
   };
 
   const handleAddExercise = () => {
+    if (isStructureLocked) {
+      return;
+    }
+
     setFormState((prev) => ({
       ...prev,
       exercises: [...prev.exercises, createEmptyExercise()]
@@ -209,6 +222,10 @@ export default function WorkoutClassForm({
   };
 
   const handleRemoveExercise = (exerciseId: string) => {
+    if (isStructureLocked) {
+      return;
+    }
+
     setFormState((prev) => {
       const remaining = prev.exercises.filter((exercise) => exercise.id !== exerciseId);
       return {
@@ -219,6 +236,10 @@ export default function WorkoutClassForm({
   };
 
   const handleAddSet = (exerciseId: string) => {
+    if (isStructureLocked) {
+      return;
+    }
+
     setFormState((prev) => ({
       ...prev,
       exercises: prev.exercises.map((exercise) =>
@@ -230,6 +251,10 @@ export default function WorkoutClassForm({
   };
 
   const handleRemoveSet = (exerciseId: string, setId: string) => {
+    if (isStructureLocked) {
+      return;
+    }
+
     setFormState((prev) => ({
       ...prev,
       exercises: prev.exercises.map((exercise) => {
@@ -263,7 +288,8 @@ export default function WorkoutClassForm({
         sets: exercise.sets.map((set) => ({
           id: set.id,
           weightKg: toNumberOrUndefined(set.weight),
-          repetitions: toNumberOrUndefined(set.repetitions, true)
+          repetitions: toNumberOrUndefined(set.repetitions, true),
+          rpe: toNumberOrUndefined(set.rpe)
         }))
       }))
     };
@@ -281,8 +307,12 @@ export default function WorkoutClassForm({
     <section className={styles.container}>
       <header className={styles.header}>
         <div>
-          <h2>Novo treino do dia</h2>
-          <p>Organize os exercícios com séries, cargas e repetições para acompanhar sua evolução.</p>
+          <h2>{isStructureLocked ? 'Registrar sessão do dia' : 'Cadastrar treino-modelo'}</h2>
+          <p>
+            {isStructureLocked
+              ? 'Atualize as cargas, repetições e RPE para registrar uma nova sessão deste treino.'
+              : 'Organize os exercícios com séries, cargas e repetições para montar o esqueleto do treino.'}
+          </p>
         </div>
         <span className={styles.exerciseCount}>
           {exercisesCount} {exercisesCount === 1 ? 'exercício' : 'exercícios'}
@@ -320,6 +350,7 @@ export default function WorkoutClassForm({
               onChange={handleRootFieldChange('name')}
               placeholder="Ex.: Treino de perna"
               required
+              disabled={isStructureLocked}
             />
           </div>
           <div className={styles.fieldGroup}>
@@ -330,6 +361,7 @@ export default function WorkoutClassForm({
               value={formState.focus}
               onChange={handleRootFieldChange('focus')}
               placeholder="Ex.: Quadríceps, posterior"
+              disabled={isStructureLocked}
             />
           </div>
         </div>
@@ -364,6 +396,7 @@ export default function WorkoutClassForm({
               exercise={exercise}
               canRemove={formState.exercises.length > 1}
               muscleGroupOptions={muscleGroups}
+              structureLocked={isStructureLocked}
               onExerciseFieldChange={handleExerciseFieldChange}
               onSetFieldChange={handleSetFieldChange}
               onAddSet={handleAddSet}
@@ -374,11 +407,20 @@ export default function WorkoutClassForm({
         </div>
 
         <div className={styles.formActions}>
-          <button type="button" className={styles.secondaryButton} onClick={handleAddExercise}>
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={handleAddExercise}
+            disabled={isStructureLocked}
+          >
             Adicionar exercício
           </button>
           <button type="submit" className={styles.primaryButton} disabled={isSubmitting}>
-            {isSubmitting ? 'Salvando...' : 'Cadastrar treino'}
+            {isSubmitting
+              ? 'Salvando...'
+              : isStructureLocked
+                ? 'Registrar sessão'
+                : 'Cadastrar treino'}
           </button>
         </div>
       </form>

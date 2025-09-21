@@ -2,6 +2,7 @@ export interface WorkoutSetDraft {
   id: string;
   weight: string;
   repetitions: string;
+  rpe: string;
 }
 
 export interface WorkoutExerciseDraft {

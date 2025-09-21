@@ -338,6 +338,7 @@ export default function WorkoutsPage() {
             muscleGroupError={muscleGroupError}
             prefillRequest={prefillRequest}
             onClearPrefill={handleClearPrefill}
+            structureLocked={Boolean(prefillRequest)}
           />
           {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
           {error ? <p className={styles.error}>{error}</p> : null}

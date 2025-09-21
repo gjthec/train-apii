@@ -8,6 +8,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  where,
   updateDoc,
   type DocumentData,
   type FirestoreDataConverter
@@ -159,6 +160,7 @@ export interface WorkoutSet {
   order: number;
   weightKg: number;
   repetitions: number;
+  rpe?: number;
 }
 
 export interface WorkoutExercise {
@@ -172,6 +174,7 @@ export interface WorkoutExercise {
 
 export interface WorkoutSession {
   id: string;
+  templateId: string;
   scheduledFor: IsoDateString;
   notes?: string;
   exercises: WorkoutExercise[];
@@ -230,6 +233,7 @@ export interface WorkoutSetInput {
   id?: string;
   weightKg?: number | string;
   repetitions?: number | string;
+  rpe?: number | string;
 }
 
 export interface WorkoutExerciseInput {
@@ -286,6 +290,7 @@ const toWorkoutSets = (value: unknown): WorkoutSet[] => {
     const asRecord = item as Record<string, unknown>;
     const weightKg = toFiniteNumber(asRecord.weightKg);
     const repetitions = toInteger(asRecord.repetitions);
+    const rpe = toFiniteNumber(asRecord.rpe);
 
     if (typeof weightKg !== 'number' || typeof repetitions !== 'number') {
       return;
@@ -298,7 +303,8 @@ const toWorkoutSets = (value: unknown): WorkoutSet[] => {
           ? asRecord.order
           : index + 1,
       weightKg,
-      repetitions
+      repetitions,
+      ...(typeof rpe === 'number' ? { rpe } : {})
     });
   });
 
@@ -312,6 +318,94 @@ const sortSessionsByDateDesc = (sessions: WorkoutSession[]): WorkoutSession[] =>
     return Number.isNaN(bValue) ? -1 : Number.isNaN(aValue) ? 1 : bValue - aValue;
   });
 };
+
+async function fetchWorkoutSessionsGroupedByTemplate(
+  uid: string,
+  db: ReturnType<typeof getDb>
+): Promise<Map<string, WorkoutSession[]>> {
+  const grouped = new Map<string, WorkoutSession[]>();
+  const sessionsRef = collection(db, `users/${uid}/workoutSessions`).withConverter(
+    createWorkoutSessionConverter()
+  );
+  const snapshot = await getDocs(query(sessionsRef, orderBy('date', 'desc'), orderBy('createdAt', 'desc')));
+
+  snapshot.docs.forEach((docSnap) => {
+    try {
+      const session = docSnap.data();
+      const list = grouped.get(session.templateId);
+      if (list) {
+        list.push(session);
+      } else {
+        grouped.set(session.templateId, [session]);
+      }
+    } catch (error) {
+      console.warn('Ignorando sessão de treino inválida', error);
+    }
+  });
+
+  grouped.forEach((sessions, templateId) => {
+    grouped.set(templateId, sortSessionsByDateDesc(sessions));
+  });
+
+  return grouped;
+}
+
+async function fetchSessionsForTemplate(
+  uid: string,
+  db: ReturnType<typeof getDb>,
+  templateId: string
+): Promise<WorkoutSession[]> {
+  const sessions: WorkoutSession[] = [];
+  const sessionsRef = collection(db, `users/${uid}/workoutSessions`).withConverter(
+    createWorkoutSessionConverter()
+  );
+  const snapshot = await getDocs(
+    query(sessionsRef, where('templateId', '==', templateId), orderBy('date', 'desc'), orderBy('createdAt', 'desc'))
+  );
+
+  snapshot.docs.forEach((docSnap) => {
+    try {
+      sessions.push(docSnap.data());
+    } catch (error) {
+      console.warn('Ignorando sessão de treino inválida', error);
+    }
+  });
+
+  return sortSessionsByDateDesc(sessions);
+}
+
+async function loadWorkoutClass(
+  uid: string,
+  db: ReturnType<typeof getDb>,
+  templateId: string
+): Promise<WorkoutClass> {
+  const workoutRef = doc(db, `users/${uid}/workouts/${templateId}`).withConverter(
+    createWorkoutClassConverter()
+  );
+  const snapshot = await getDoc(workoutRef);
+  if (!snapshot.exists()) {
+    throw new Error('O treino selecionado não foi encontrado.');
+  }
+
+  const template = snapshot.data();
+  const sessions = await fetchSessionsForTemplate(uid, db, templateId);
+  const latestSession = sessions[0];
+  const exerciseCount = latestSession?.exerciseCount ?? template.exerciseCount;
+  const totalSets = latestSession?.totalSets ?? template.totalSets;
+  const scheduledFor = latestSession?.scheduledFor ?? template.scheduledFor;
+
+  return {
+    ...template,
+    notes: latestSession?.notes ?? template.notes,
+    exercises: latestSession?.exercises ?? template.exercises,
+    exerciseCount,
+    totalSets,
+    scheduledFor,
+    sessions,
+    sessionCount: sessions.length,
+    lastSessionOn: sessions[0]?.scheduledFor ?? template.lastSessionOn
+  } satisfies WorkoutClass;
+}
 
 const toWorkoutExercises = (value: unknown): WorkoutExercise[] => {
   if (!Array.isArray(value)) {
@@ -349,90 +443,23 @@ const toWorkoutExercises = (value: unknown): WorkoutExercise[] => {
   return exercises;
 };
 
-const toWorkoutSessions = (value: unknown): WorkoutSession[] => {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  const sessions: WorkoutSession[] = [];
-
-  value.forEach((item, index) => {
-    if (typeof item !== 'object' || item === null) {
-      return;
-    }
-
-    const asRecord = item as Record<string, unknown>;
-    const scheduledFor = normalizeStoredDate(asRecord.scheduledFor ?? asRecord.date);
-    if (!scheduledFor) {
-      return;
-    }
-
-    const exercises = toWorkoutExercises(asRecord.exercises);
-    if (exercises.length === 0) {
-      return;
-    }
-
-    const exerciseCount = exercises.length;
-    const totalSets = exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
-
-    sessions.push({
-      id: ensureIdentifier('session', index, asRecord.id),
-      scheduledFor,
-      notes: toStringOrUndefined(asRecord.notes),
-      exercises,
-      exerciseCount,
-      totalSets,
-      createdAt: toIsoDate(asRecord.createdAt),
-      updatedAt: toIsoDate(asRecord.updatedAt)
-    });
-  });
-
-  return sortSessionsByDateDesc(sessions);
-};
-
 const createWorkoutClassConverter = (): FirestoreDataConverter<WorkoutClass> => ({
   toFirestore() {
     throw new Error('Serialization is not supported on the client.');
   },
   fromFirestore(snapshot) {
     const data: DocumentData = snapshot.data();
-    let sessions = toWorkoutSessions(data.sessions);
-
-    if (sessions.length === 0) {
-      const fallbackExercises = toWorkoutExercises(data.exercises);
-      if (fallbackExercises.length > 0) {
-        const fallbackDate =
-          normalizeStoredDate(data.scheduledFor) ??
-          normalizeStoredDate(data.updatedAt) ??
-          normalizeStoredDate(data.createdAt) ??
-          formatDateForInput(new Date());
-
-        const fallbackTotalSets = fallbackExercises.reduce(
-          (total, exercise) => total + exercise.seriesCount,
-          0
-        );
-
-        sessions = [
-          {
-            id: ensureIdentifier('session', 0, undefined),
-            scheduledFor: fallbackDate,
-            notes: toStringOrUndefined(data.notes),
-            exercises: fallbackExercises,
-            exerciseCount: fallbackExercises.length,
-            totalSets: fallbackTotalSets,
-            createdAt: toIsoDate(data.createdAt),
-            updatedAt: toIsoDate(data.updatedAt)
-          }
-        ];
-      }
-    }
-
-    const latestSession = sessions[0];
-    const exercises = latestSession?.exercises ?? toWorkoutExercises(data.exercises);
-    const exerciseCount = latestSession?.exerciseCount ?? exercises.length;
-    const totalSets = latestSession?.totalSets ?? exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
-    const scheduledFor =
-      latestSession?.scheduledFor ??
+    const exercises = toWorkoutExercises(data.exercises);
+    const exerciseCount =
+      typeof data.exerciseCount === 'number' && Number.isFinite(data.exerciseCount)
+        ? data.exerciseCount
+        : exercises.length;
+    const totalSets =
+      typeof data.totalSets === 'number' && Number.isFinite(data.totalSets)
+        ? data.totalSets
+        : exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
+    const lastSessionOn =
+      normalizeStoredDate(data.lastSessionOn) ??
       normalizeStoredDate(data.scheduledFor) ??
       normalizeStoredDate(data.updatedAt) ??
       normalizeStoredDate(data.createdAt);
@@ -441,17 +468,57 @@ const createWorkoutClassConverter = (): FirestoreDataConverter<WorkoutClass> => 
       id: snapshot.id,
       name: toStringOrUndefined(data.name) ?? 'Treino sem nome',
       focus: toStringOrUndefined(data.focus),
-      scheduledFor,
+      scheduledFor: lastSessionOn,
       notes: toStringOrUndefined(data.notes),
       exercises,
       exerciseCount,
       totalSets,
       createdAt: toIsoDate(data.createdAt),
       updatedAt: toIsoDate(data.updatedAt),
-      sessions,
-      sessionCount: sessions.length,
-      lastSessionOn: sessions[0]?.scheduledFor
+      sessions: [],
+      sessionCount:
+        typeof data.sessionCount === 'number' && Number.isFinite(data.sessionCount)
+          ? data.sessionCount
+          : 0,
+      lastSessionOn
     } satisfies WorkoutClass;
+  }
+});
+
+const createWorkoutSessionConverter = (): FirestoreDataConverter<WorkoutSession> => ({
+  toFirestore() {
+    throw new Error('Serialization is not supported on the client.');
+  },
+  fromFirestore(snapshot) {
+    const data: DocumentData = snapshot.data();
+    const templateId = toStringOrUndefined(data.templateId);
+    const scheduledFor =
+      normalizeStoredDate(data.scheduledFor ?? data.date) ?? formatDateForInput(new Date());
+    if (!templateId) {
+      throw new Error('Sessão inválida sem template associado.');
+    }
+
+    const exercises = toWorkoutExercises(data.exercises);
+    const exerciseCount =
+      typeof data.exerciseCount === 'number' && Number.isFinite(data.exerciseCount)
+        ? data.exerciseCount
+        : exercises.length;
+    const totalSets =
+      typeof data.totalSets === 'number' && Number.isFinite(data.totalSets)
+        ? data.totalSets
+        : exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
+
+    return {
+      id: snapshot.id,
+      templateId,
+      scheduledFor,
+      notes: toStringOrUndefined(data.notes),
+      exercises,
+      exerciseCount,
+      totalSets,
+      createdAt: toIsoDate(data.createdAt),
+      updatedAt: toIsoDate(data.updatedAt)
+    } satisfies WorkoutSession;
   }
 });
 
@@ -535,6 +602,7 @@ const sanitizeWorkoutSetInput = (
 ): WorkoutSet => {
   const weightKg = toFiniteNumber(set.weightKg);
   const repetitions = toInteger(set.repetitions);
+  const rpe = toFiniteNumber(set.rpe);
 
   if (typeof weightKg !== 'number' || typeof repetitions !== 'number') {
     throw new Error(`Informe peso e repetições válidos para a série ${index + 1} de ${exerciseLabel}.`);
@@ -544,7 +612,8 @@ const sanitizeWorkoutSetInput = (
     id: ensureIdentifier('set', index, set.id),
     order: index + 1,
     weightKg,
-    repetitions
+    repetitions,
+    ...(typeof rpe === 'number' ? { rpe } : {})
   } satisfies WorkoutSet;
 };
 
@@ -582,24 +651,46 @@ const serializeWorkoutExercise = (exercise: WorkoutExercise) => ({
     id: set.id,
     order: set.order,
     weightKg: set.weightKg,
-    repetitions: set.repetitions
+    repetitions: set.repetitions,
+    ...(typeof set.rpe === 'number' ? { rpe: set.rpe } : {})
   })),
   seriesCount: exercise.seriesCount
 });
 
-const serializeWorkoutSession = (session: WorkoutSession) => ({
-  id: session.id,
-  scheduledFor: session.scheduledFor,
-  ...(session.notes ? { notes: session.notes } : {}),
-  exercises: session.exercises.map(serializeWorkoutExercise),
-  exerciseCount: session.exerciseCount,
-  totalSets: session.totalSets,
-  ...(session.createdAt ? { createdAt: session.createdAt } : {}),
-  ...(session.updatedAt ? { updatedAt: session.updatedAt } : {})
-});
-
 export async function fetchWorkoutClasses(): Promise<WorkoutClass[]> {
-  return fetchOrderedUserCollection('workouts', 'createdAt', createWorkoutClassConverter());
+  const uid = await requireUid();
+  const db = getDb();
+  const workoutsRef = collection(db, `users/${uid}/workouts`).withConverter(
+    createWorkoutClassConverter()
+  );
+  const snapshot = await getDocs(query(workoutsRef, orderBy('createdAt', 'desc')));
+  const templates = snapshot.docs.map((docSnap) => docSnap.data());
+
+  if (templates.length === 0) {
+    return [];
+  }
+
+  const sessionsByTemplate = await fetchWorkoutSessionsGroupedByTemplate(uid, db);
+
+  return templates.map((template) => {
+    const sessions = sessionsByTemplate.get(template.id) ?? [];
+    const latestSession = sessions[0];
+    const exerciseCount = latestSession?.exerciseCount ?? template.exerciseCount;
+    const totalSets = latestSession?.totalSets ?? template.totalSets;
+    const scheduledFor = latestSession?.scheduledFor ?? template.scheduledFor;
+
+    return {
+      ...template,
+      notes: latestSession?.notes ?? template.notes,
+      exercises: latestSession?.exercises ?? template.exercises,
+      exerciseCount,
+      totalSets,
+      scheduledFor,
+      sessions,
+      sessionCount: sessions.length,
+      lastSessionOn: sessions[0]?.scheduledFor ?? template.lastSessionOn
+    } satisfies WorkoutClass;
+  });
 }
 
 export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<WorkoutClass> {
@@ -618,78 +709,70 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
 
   const exercises = input.exercises.map(sanitizeWorkoutExerciseInput);
   const totalSets = exercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
-
   const uid = await requireUid();
   const db = getDb();
   const nowIso = new Date().toISOString();
-  const session: WorkoutSession = {
-    id: ensureIdentifier('session', Date.now(), undefined),
-    scheduledFor,
-    notes,
-    exercises,
-    exerciseCount: exercises.length,
-    totalSets,
-    createdAt: nowIso,
-    updatedAt: nowIso
-  };
 
   const existingWorkoutId = sanitizeOptionalString(input.workoutId);
 
   if (existingWorkoutId) {
-    const workoutRef = doc(db, `users/${uid}/workouts/${existingWorkoutId}`);
-    const snapshot = await getDoc(workoutRef);
-
-    if (!snapshot.exists()) {
+    const templateRef = doc(db, `users/${uid}/workouts/${existingWorkoutId}`).withConverter(
+      createWorkoutClassConverter()
+    );
+    const templateSnapshot = await getDoc(templateRef);
+    if (!templateSnapshot.exists()) {
       throw new Error('O treino selecionado não foi encontrado.');
     }
 
-    const data = snapshot.data() as DocumentData;
-    const existingSessions = toWorkoutSessions(data.sessions);
-    const mergedSessions = sortSessionsByDateDesc([
-      session,
-      ...existingSessions.filter((existing) => existing.id !== session.id)
-    ]);
-    const serializedSessions = mergedSessions.map(serializeWorkoutSession);
-    const existingCreatedAt = toIsoDate(data.createdAt) ?? nowIso;
-    const nextFocus = focus ?? toStringOrUndefined(data.focus);
-    const nextNotes = notes ?? toStringOrUndefined(data.notes);
+    const template = templateSnapshot.data();
+    const sessionExercises = template.exercises.map((templateExercise, index) => {
+      const matchingExercise =
+        exercises.find((exercise) => exercise.id === templateExercise.id) ??
+        exercises.find((exercise) => exercise.name === templateExercise.name);
+      const setsSource = matchingExercise?.sets ?? templateExercise.sets;
+      const sets = setsSource.map((set, setIndex) => ({
+        id: ensureIdentifier('set', setIndex, set.id),
+        order: setIndex + 1,
+        weightKg: set.weightKg,
+        repetitions: set.repetitions,
+        ...(typeof set.rpe === 'number' ? { rpe: set.rpe } : {})
+      }));
 
-    const updatePayload: Record<string, unknown> = {
-      name,
-      sessions: serializedSessions,
-      sessionCount: mergedSessions.length,
-      scheduledFor: session.scheduledFor,
-      exerciseCount: session.exerciseCount,
-      totalSets: session.totalSets,
-      lastSessionOn: session.scheduledFor,
+      return {
+        id: templateExercise.id,
+        name: templateExercise.name,
+        muscleGroup: templateExercise.muscleGroup,
+        notes: matchingExercise?.notes ?? templateExercise.notes,
+        sets,
+        seriesCount: sets.length
+      } satisfies WorkoutExercise;
+    });
+
+    const sessionExerciseCount = sessionExercises.length;
+    const sessionTotalSets = sessionExercises.reduce((total, exercise) => total + exercise.seriesCount, 0);
+    const sessionsCollection = collection(db, `users/${uid}/workoutSessions`);
+    await addDoc(sessionsCollection, {
+      templateId: existingWorkoutId,
+      date: scheduledFor,
+      scheduledFor,
+      ...(notes ? { notes } : {}),
+      exercises: sessionExercises.map(serializeWorkoutExercise),
+      exerciseCount: sessionExerciseCount,
+      totalSets: sessionTotalSets,
+      createdAt: nowIso,
       updatedAt: nowIso
-    };
+    });
 
-    if (nextFocus) {
-      updatePayload.focus = nextFocus;
-    }
+    await updateDoc(doc(db, `users/${uid}/workouts/${existingWorkoutId}`), {
+      lastSessionOn: scheduledFor,
+      sessionCount: (template.sessionCount ?? 0) + 1,
+      scheduledFor,
+      exerciseCount: template.exerciseCount,
+      totalSets: template.totalSets,
+      updatedAt: nowIso
+    });
 
-    if (nextNotes) {
-      updatePayload.notes = nextNotes;
-    }
-
-    await updateDoc(workoutRef, updatePayload);
-
-    return {
-      id: existingWorkoutId,
-      name,
-      focus: nextFocus,
-      scheduledFor: session.scheduledFor,
-      notes: nextNotes,
-      exercises: session.exercises,
-      exerciseCount: session.exerciseCount,
-      totalSets: session.totalSets,
-      createdAt: existingCreatedAt,
-      updatedAt: nowIso,
-      sessions: mergedSessions,
-      sessionCount: mergedSessions.length,
-      lastSessionOn: session.scheduledFor
-    } satisfies WorkoutClass;
+    return loadWorkoutClass(uid, db, existingWorkoutId);
   }
 
   const workoutsCollection = collection(db, `users/${uid}/workouts`);
@@ -697,31 +780,36 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
     name,
     ...(focus ? { focus } : {}),
     ...(notes ? { notes } : {}),
-    sessions: [serializeWorkoutSession(session)],
-    sessionCount: 1,
-    scheduledFor: session.scheduledFor,
-    exerciseCount: session.exerciseCount,
-    totalSets: session.totalSets,
-    lastSessionOn: session.scheduledFor,
+    exercises: exercises.map(serializeWorkoutExercise),
+    exerciseCount: exercises.length,
+    totalSets,
+    sessionCount: 0,
+    scheduledFor,
+    lastSessionOn: null,
     createdAt: nowIso,
     updatedAt: nowIso
   });
 
-  return {
-    id: docRef.id,
-    name,
-    focus,
-    scheduledFor: session.scheduledFor,
-    notes,
-    exercises: session.exercises,
-    exerciseCount: session.exerciseCount,
-    totalSets: session.totalSets,
+  const sessionsCollection = collection(db, `users/${uid}/workoutSessions`);
+  await addDoc(sessionsCollection, {
+    templateId: docRef.id,
+    date: scheduledFor,
+    scheduledFor,
+    ...(notes ? { notes } : {}),
+    exercises: exercises.map(serializeWorkoutExercise),
+    exerciseCount: exercises.length,
+    totalSets,
     createdAt: nowIso,
-    updatedAt: nowIso,
-    sessions: [session],
+    updatedAt: nowIso
+  });
+
+  await updateDoc(doc(db, `users/${uid}/workouts/${docRef.id}`), {
     sessionCount: 1,
-    lastSessionOn: session.scheduledFor
-  } satisfies WorkoutClass;
+    lastSessionOn: scheduledFor,
+    updatedAt: nowIso
+  });
+
+  return loadWorkoutClass(uid, db, docRef.id);
 }
 
 export async function deleteWorkoutClass(workoutId: string): Promise<void> {
@@ -733,6 +821,12 @@ export async function deleteWorkoutClass(workoutId: string): Promise<void> {
   const uid = await requireUid();
   const db = getDb();
   const workoutRef = doc(db, `users/${uid}/workouts/${sanitizedId}`);
+  const sessionsRef = collection(db, `users/${uid}/workoutSessions`);
+  const sessionsSnapshot = await getDocs(
+    query(sessionsRef, where('templateId', '==', sanitizedId))
+  );
+
+  await Promise.all(sessionsSnapshot.docs.map((docSnap) => deleteDoc(docSnap.ref)));
   await deleteDoc(workoutRef);
 }
 

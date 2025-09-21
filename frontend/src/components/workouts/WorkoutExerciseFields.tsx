@@ -11,8 +11,9 @@ interface WorkoutExerciseFieldsProps {
   index: number;
   canRemove: boolean;
   muscleGroupOptions: readonly MuscleGroupClass[];
+  structureLocked?: boolean;
   onExerciseFieldChange: (exerciseId: string, field: 'name' | 'muscleGroup' | 'notes', value: string) => void;
-  onSetFieldChange: (exerciseId: string, setId: string, field: 'weight' | 'repetitions', value: string) => void;
+  onSetFieldChange: (exerciseId: string, setId: string, field: 'weight' | 'repetitions' | 'rpe', value: string) => void;
   onAddSet: (exerciseId: string) => void;
   onRemoveSet: (exerciseId: string, setId: string) => void;
   onRemoveExercise: (exerciseId: string) => void;
@@ -25,6 +26,7 @@ export default function WorkoutExerciseFields({
   index,
   canRemove,
   muscleGroupOptions,
+  structureLocked = false,
   onExerciseFieldChange,
   onSetFieldChange,
   onAddSet,
@@ -53,6 +55,7 @@ export default function WorkoutExerciseFields({
               onExerciseFieldChange(exercise.id, 'name', event.target.value)}
             placeholder="Ex.: Agachamento livre"
             required
+            disabled={structureLocked}
           />
         </div>
         <div className={styles.fieldGroup}>
@@ -62,7 +65,7 @@ export default function WorkoutExerciseFields({
             value={exercise.muscleGroup}
             onChange={(event: TextInputEvent) =>
               onExerciseFieldChange(exercise.id, 'muscleGroup', event.target.value)}
-            disabled={selectDisabled}
+            disabled={selectDisabled || structureLocked}
           >
             <option value="">{muscleGroupPlaceholder}</option>
             {isCustomMuscleGroup ? (
@@ -118,13 +121,24 @@ export default function WorkoutExerciseFields({
                   required
                 />
               </div>
+              <div className={styles.fieldGroup}>
+                <label htmlFor={`set-rpe-${set.id}`}>RPE</label>
+                <input
+                  id={`set-rpe-${set.id}`}
+                  inputMode="decimal"
+                  value={set.rpe}
+                  onChange={(event: TextInputEvent) =>
+                    onSetFieldChange(exercise.id, set.id, 'rpe', event.target.value)}
+                  placeholder="Esforço percebido"
+                />
+              </div>
             </div>
             <div className={styles.setActions}>
               <button
                 type="button"
                 className={styles.removeButton}
                 onClick={() => onRemoveSet(exercise.id, set.id)}
-                disabled={exercise.sets.length === 1}
+                disabled={structureLocked || exercise.sets.length === 1}
               >
                 Remover série
               </button>
@@ -134,14 +148,19 @@ export default function WorkoutExerciseFields({
       </ol>
 
       <div className={styles.exerciseActions}>
-        <button type="button" className={styles.secondaryButton} onClick={() => onAddSet(exercise.id)}>
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          onClick={() => onAddSet(exercise.id)}
+          disabled={structureLocked}
+        >
           Adicionar série
         </button>
         <button
           type="button"
           className={styles.removeButton}
           onClick={() => onRemoveExercise(exercise.id)}
-          disabled={!canRemove}
+          disabled={structureLocked || !canRemove}
         >
           Remover exercício
         </button>
