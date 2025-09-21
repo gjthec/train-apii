@@ -6,10 +6,14 @@ import Layout from '@/components/Layout';
 import WorkoutClassForm from '@/components/workouts/WorkoutClassForm';
 import WorkoutHistoryByDate from '@/components/workouts/WorkoutHistoryByDate';
 import {
+  createExercise,
   createWorkoutClass,
   deleteWorkoutClass,
+  fetchExercises,
   fetchMuscleGroupClasses,
   fetchWorkoutClasses,
+  type Exercise,
+  type NewExerciseInput,
   type NewWorkoutClassInput,
   type MuscleGroupClass,
   type WorkoutClass
@@ -79,6 +83,8 @@ export default function WorkoutsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroupClass[]>([]);
   const [muscleGroupError, setMuscleGroupError] = useState<string | null>(null);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [exerciseError, setExerciseError] = useState<string | null>(null);
   const [prefillRequest, setPrefillRequest] = useState<
     { workout: WorkoutClass; token: number } | null
   >(null);
@@ -127,8 +133,22 @@ export default function WorkoutsPage() {
       }
     };
 
+    const loadExercises = async () => {
+      try {
+        const data = await fetchExercises();
+        if (!isMounted) return;
+        setExercises(data);
+        setExerciseError(null);
+      } catch (err) {
+        if (!isMounted) return;
+        const message = err instanceof Error ? err.message : 'Não foi possível carregar os exercícios.';
+        setExerciseError(message);
+      }
+    };
+
     void loadWorkouts();
     void loadMuscleGroups();
+    void loadExercises();
 
     return () => {
       isMounted = false;
@@ -202,6 +222,16 @@ export default function WorkoutsPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleRegisterExercise = async (input: NewExerciseInput): Promise<Exercise> => {
+    const created = await createExercise(input);
+    setExercises((previous) => {
+      const next = [created, ...previous.filter((item) => item.id !== created.id)];
+      return next;
+    });
+    setExerciseError(null);
+    return created;
   };
 
   const handleReuseWorkout = (workout: WorkoutClass) => {
@@ -336,6 +366,9 @@ export default function WorkoutsPage() {
             isSubmitting={isSubmitting}
             muscleGroups={muscleGroups}
             muscleGroupError={muscleGroupError}
+            exercises={exercises}
+            exerciseError={exerciseError}
+            onRegisterExercise={handleRegisterExercise}
             prefillRequest={prefillRequest}
             onClearPrefill={handleClearPrefill}
           />

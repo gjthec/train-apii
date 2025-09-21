@@ -1,6 +1,6 @@
 'use client';
 
-import type { MuscleGroupClass } from '@/lib/api';
+import type { Exercise, MuscleGroupClass } from '@/lib/api';
 import styles from '@/styles/WorkoutClassForm.module.css';
 import type { WorkoutExerciseDraft } from './types';
 
@@ -11,6 +11,11 @@ interface WorkoutExerciseFieldsProps {
   index: number;
   canRemove: boolean;
   muscleGroupOptions: readonly MuscleGroupClass[];
+  exerciseOptions: readonly Exercise[];
+  hasExerciseOptions: boolean;
+  onSelectExercise: (exerciseId: string, selectedId: string) => void;
+  onSaveExercise: (exerciseId: string) => void;
+  isSavingExercise: boolean;
   onExerciseFieldChange: (exerciseId: string, field: 'name' | 'muscleGroup' | 'notes', value: string) => void;
   onSetFieldChange: (exerciseId: string, setId: string, field: 'weight' | 'repetitions', value: string) => void;
   onAddSet: (exerciseId: string) => void;
@@ -25,6 +30,11 @@ export default function WorkoutExerciseFields({
   index,
   canRemove,
   muscleGroupOptions,
+  exerciseOptions,
+  hasExerciseOptions,
+  onSelectExercise,
+  onSaveExercise,
+  isSavingExercise,
   onExerciseFieldChange,
   onSetFieldChange,
   onAddSet,
@@ -39,10 +49,50 @@ export default function WorkoutExerciseFields({
     ? 'Selecione um grupo'
     : 'Cadastre grupos musculares para habilitar';
   const selectDisabled = !hasOptions && !isCustomMuscleGroup;
+  const hasLibrarySelection = hasExerciseOptions || Boolean(exercise.libraryExerciseId);
 
   return (
     <fieldset className={styles.exerciseCard}>
       <legend className={styles.exerciseLegend}>Exercício {index + 1}</legend>
+      {hasLibrarySelection ? (
+        <div className={styles.exerciseLibraryRow}>
+          <div className={styles.fieldGroup}>
+            <label htmlFor={`exercise-library-${exercise.id}`}>Exercício cadastrado</label>
+            <select
+              id={`exercise-library-${exercise.id}`}
+              value={exercise.libraryExerciseId ?? ''}
+              onChange={(event: TextInputEvent) =>
+                onSelectExercise(exercise.id, event.target.value)}
+            >
+              <option value="">Selecione um exercício</option>
+              {exerciseOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            className={styles.saveExerciseButton}
+            onClick={() => onSaveExercise(exercise.id)}
+            disabled={isSavingExercise}
+          >
+            {isSavingExercise ? 'Salvando...' : 'Salvar exercício'}
+          </button>
+        </div>
+      ) : (
+        <div className={styles.saveExerciseFallback}>
+          <button
+            type="button"
+            className={styles.saveExerciseButton}
+            onClick={() => onSaveExercise(exercise.id)}
+            disabled={isSavingExercise}
+          >
+            {isSavingExercise ? 'Salvando...' : 'Salvar exercício'}
+          </button>
+        </div>
+      )}
       <div className={styles.exerciseHeader}>
         <div className={styles.fieldGroup}>
           <label htmlFor={`exercise-name-${exercise.id}`}>Nome *</label>

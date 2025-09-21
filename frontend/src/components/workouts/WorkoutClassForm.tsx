@@ -2,7 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import type { MuscleGroupClass, NewWorkoutClassInput, WorkoutClass } from '@/lib/api';
+import type {
+  Exercise,
+  MuscleGroupClass,
+  NewExerciseInput,
+  NewWorkoutClassInput,
+  WorkoutClass
+} from '@/lib/api';
 import styles from '@/styles/WorkoutClassForm.module.css';
 import WorkoutExerciseFields from './WorkoutExerciseFields';
 import type {
@@ -16,6 +22,9 @@ interface WorkoutClassFormProps {
   isSubmitting: boolean;
   muscleGroups: readonly MuscleGroupClass[];
   muscleGroupError?: string | null;
+  exercises: readonly Exercise[];
+  exerciseError?: string | null;
+  onRegisterExercise: (input: NewExerciseInput) => Promise<Exercise>;
   prefillRequest?: {
     workout: WorkoutClass;
     token: number;
@@ -68,6 +77,7 @@ const createEmptyExercise = (): WorkoutExerciseDraft => ({
   name: '',
   muscleGroup: '',
   notes: '',
+  libraryExerciseId: null,
   sets: [createEmptySet()]
 });
 
@@ -93,6 +103,7 @@ const createStateFromWorkout = (workout: WorkoutClass): WorkoutClassFormState =>
       name: '',
       muscleGroup: '',
       notes: '',
+      libraryExerciseId: null,
       sets: []
     }
   ];
@@ -108,6 +119,7 @@ const createStateFromWorkout = (workout: WorkoutClass): WorkoutClassFormState =>
       name: exercise.name,
       muscleGroup: exercise.muscleGroup ?? '',
       notes: exercise.notes ?? '',
+      libraryExerciseId: null,
       sets:
         exercise.sets.length > 0
           ? exercise.sets.map((set) => ({
@@ -125,6 +137,9 @@ export default function WorkoutClassForm({
   isSubmitting,
   muscleGroups,
   muscleGroupError,
+  exercises,
+  exerciseError,
+  onRegisterExercise,
   prefillRequest,
   onClearPrefill
 }: WorkoutClassFormProps) {
@@ -132,6 +147,9 @@ export default function WorkoutClassForm({
   const activePrefill = prefillRequest?.workout;
   const exercisesCount = formState.exercises.length;
   const hasMuscleGroups = muscleGroups.length > 0;
+  const hasExerciseOptions = exercises.length > 0;
+  const [savingExerciseIds, setSavingExerciseIds] = useState<Set<string>>(() => new Set());
+  const [exerciseLibraryError, setExerciseLibraryError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!prefillRequest) {
@@ -140,6 +158,55 @@ export default function WorkoutClassForm({
 
     setFormState(createStateFromWorkout(prefillRequest.workout));
   }, [prefillRequest]);
+
+  useEffect(() => {
+    setFormState((prev) => {
+      let changed = false;
+      const nextExercises = prev.exercises.map((exercise) => {
+        const trimmedName = exercise.name.trim();
+        if (!trimmedName) {
+          if (exercise.libraryExerciseId !== null) {
+            changed = true;
+            return { ...exercise, libraryExerciseId: null };
+          }
+          return exercise;
+        }
+
+        const matched =
+          exercises.find((option) => option.id === exercise.libraryExerciseId) ??
+          exercises.find((option) => option.name.toLowerCase() === trimmedName.toLowerCase());
+
+        if (!matched) {
+          if (exercise.libraryExerciseId !== null) {
+            changed = true;
+            return { ...exercise, libraryExerciseId: null };
+          }
+          return exercise;
+        }
+
+        const normalizedMuscle = matched.muscleGroup ?? '';
+        if (
+          exercise.libraryExerciseId === matched.id &&
+          exercise.muscleGroup === normalizedMuscle
+        ) {
+          return exercise;
+        }
+
+        changed = true;
+        return {
+          ...exercise,
+          libraryExerciseId: matched.id,
+          muscleGroup: exercise.muscleGroup || normalizedMuscle
+        };
+      });
+
+      if (!changed) {
+        return prev;
+      }
+
+      return { ...prev, exercises: nextExercises };
+    });
+  }, [exercises]);
 
   const prefillDateLabel = useMemo(() => {
     if (!activePrefill?.scheduledFor) {
@@ -177,9 +244,86 @@ export default function WorkoutClassForm({
     setFormState((prev) => ({
       ...prev,
       exercises: prev.exercises.map((exercise) =>
-        exercise.id === exerciseId ? { ...exercise, [field]: value } : exercise
+        exercise.id === exerciseId
+          ? {
+              ...exercise,
+              [field]: value,
+              libraryExerciseId: field === 'name' || field === 'muscleGroup' ? null : exercise.libraryExerciseId
+            }
+          : exercise
       )
     }));
+  };
+
+  const handleSelectExerciseFromLibrary = (exerciseId: string, selectedId: string) => {
+    const selected = exercises.find((item) => item.id === selectedId);
+    setFormState((prev) => ({
+      ...prev,
+      exercises: prev.exercises.map((exercise) => {
+        if (exercise.id !== exerciseId) {
+          return exercise;
+        }
+
+        if (!selected) {
+          return { ...exercise, libraryExerciseId: null };
+        }
+
+        return {
+          ...exercise,
+          libraryExerciseId: selected.id,
+          name: selected.name,
+          muscleGroup: selected.muscleGroup ?? '',
+          notes: exercise.notes
+        };
+      })
+    }));
+  };
+
+  const handleSaveExerciseToLibrary = async (exerciseId: string) => {
+    const exercise = formState.exercises.find((item) => item.id === exerciseId);
+    if (!exercise) {
+      return;
+    }
+
+    const trimmedName = exercise.name.trim();
+    if (trimmedName.length === 0) {
+      setExerciseLibraryError('Informe um nome antes de salvar o exercício.');
+      return;
+    }
+
+    setExerciseLibraryError(null);
+    setSavingExerciseIds((prev) => new Set(prev).add(exerciseId));
+
+    try {
+      const created = await onRegisterExercise({
+        name: trimmedName,
+        muscleGroup: exercise.muscleGroup.trim() || undefined
+      });
+
+      setFormState((prev) => ({
+        ...prev,
+        exercises: prev.exercises.map((item) =>
+          item.id === exerciseId
+            ? {
+                ...item,
+                name: created.name,
+                muscleGroup: created.muscleGroup ?? '',
+                libraryExerciseId: created.id
+              }
+            : item
+        )
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Não foi possível salvar o exercício na biblioteca.';
+      setExerciseLibraryError(message);
+    } finally {
+      setSavingExerciseIds((prev) => {
+        const next = new Set(prev);
+        next.delete(exerciseId);
+        return next;
+      });
+    }
   };
 
   const handleSetFieldChange = (
@@ -258,13 +402,13 @@ export default function WorkoutClassForm({
       exercises: formState.exercises.map((exercise) => ({
         id: exercise.id,
         name: exercise.name,
-        muscleGroup: exercise.muscleGroup,
-        notes: exercise.notes,
-        sets: exercise.sets.map((set) => ({
-          id: set.id,
-          weightKg: toNumberOrUndefined(set.weight),
-          repetitions: toNumberOrUndefined(set.repetitions, true)
-        }))
+          muscleGroup: exercise.muscleGroup,
+          notes: exercise.notes,
+          sets: exercise.sets.map((set) => ({
+            id: set.id,
+            weightKg: toNumberOrUndefined(set.weight),
+            repetitions: toNumberOrUndefined(set.repetitions, true)
+          }))
       }))
     };
 
@@ -303,6 +447,8 @@ export default function WorkoutClassForm({
         </div>
       ) : null}
       {muscleGroupError ? <p className={styles.inlineError}>{muscleGroupError}</p> : null}
+      {exerciseError ? <p className={styles.inlineError}>{exerciseError}</p> : null}
+      {exerciseLibraryError ? <p className={styles.inlineError}>{exerciseLibraryError}</p> : null}
       {!hasMuscleGroups ? (
         <p className={styles.supportMessage}>
           Cadastre os grupos musculares em <Link href="/muscle-groups">Grupos musculares</Link> para
@@ -364,6 +510,11 @@ export default function WorkoutClassForm({
               exercise={exercise}
               canRemove={formState.exercises.length > 1}
               muscleGroupOptions={muscleGroups}
+              exerciseOptions={exercises}
+              hasExerciseOptions={hasExerciseOptions}
+              onSelectExercise={handleSelectExerciseFromLibrary}
+              onSaveExercise={handleSaveExerciseToLibrary}
+              isSavingExercise={savingExerciseIds.has(exercise.id)}
               onExerciseFieldChange={handleExerciseFieldChange}
               onSetFieldChange={handleSetFieldChange}
               onAddSet={handleAddSet}
