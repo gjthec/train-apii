@@ -18,7 +18,8 @@ import {
   type NewExerciseInput,
   type NewWorkoutClassInput,
   type MuscleGroupClass,
-  type WorkoutClass
+  type WorkoutClass,
+  type WorkoutSession
 } from '@/lib/api';
 import styles from '@/styles/Workouts.module.css';
 
@@ -54,6 +55,85 @@ const sortWorkoutsByDate = (items: WorkoutClass[]): WorkoutClass[] => {
 
     return bValue - aValue;
   });
+};
+
+const sortSessionsByDate = (sessions: WorkoutSession[]): WorkoutSession[] => {
+  return [...sessions].sort((a, b) => {
+    const aValue =
+      toSortableNumber(a.scheduledFor) || toSortableNumber(a.updatedAt) || toSortableNumber(a.createdAt);
+    const bValue =
+      toSortableNumber(b.scheduledFor) || toSortableNumber(b.updatedAt) || toSortableNumber(b.createdAt);
+
+    return bValue - aValue;
+  });
+};
+
+const mergeWorkoutSessions = (
+  previous: WorkoutClass | undefined,
+  incoming: WorkoutClass
+): WorkoutClass => {
+  if (!previous) {
+    const sortedSessions = sortSessionsByDate(incoming.sessions ?? []);
+    const latestSession = sortedSessions[0];
+
+    return {
+      ...incoming,
+      sessions: sortedSessions,
+      sessionCount: sortedSessions.length,
+      lastSessionOn: latestSession?.scheduledFor ?? incoming.lastSessionOn,
+      exercises: latestSession?.exercises ?? incoming.exercises,
+      exerciseCount: latestSession?.exerciseCount ?? incoming.exerciseCount,
+      totalSets: latestSession?.totalSets ?? incoming.totalSets,
+      scheduledFor: latestSession?.scheduledFor ?? incoming.scheduledFor
+    };
+  }
+
+  const previousSessions = previous.sessions ?? [];
+  const incomingSessions = incoming.sessions ?? [];
+
+  if (incomingSessions.length === 0) {
+    const sortedPreviousSessions = sortSessionsByDate(previousSessions);
+    const fallbackSession = sortedPreviousSessions[0];
+
+    return {
+      ...previous,
+      ...incoming,
+      sessions: sortedPreviousSessions,
+      sessionCount: sortedPreviousSessions.length,
+      lastSessionOn: fallbackSession?.scheduledFor ?? incoming.lastSessionOn ?? previous.lastSessionOn,
+      exercises: fallbackSession?.exercises ?? incoming.exercises ?? previous.exercises,
+      exerciseCount:
+        fallbackSession?.exerciseCount ?? incoming.exerciseCount ?? previous.exerciseCount,
+      totalSets: fallbackSession?.totalSets ?? incoming.totalSets ?? previous.totalSets,
+      scheduledFor: fallbackSession?.scheduledFor ?? incoming.scheduledFor ?? previous.scheduledFor
+    };
+  }
+
+  const sessionMap = new Map<string, WorkoutSession>();
+  for (const session of incomingSessions) {
+    sessionMap.set(session.id, session);
+  }
+  for (const session of previousSessions) {
+    if (!sessionMap.has(session.id)) {
+      sessionMap.set(session.id, session);
+    }
+  }
+
+  const mergedSessions = sortSessionsByDate(Array.from(sessionMap.values()));
+  const latestSession = mergedSessions[0];
+
+  return {
+    ...previous,
+    ...incoming,
+    sessions: mergedSessions,
+    sessionCount: mergedSessions.length,
+    lastSessionOn: latestSession?.scheduledFor ?? incoming.lastSessionOn ?? previous.lastSessionOn,
+    exercises: latestSession?.exercises ?? incoming.exercises ?? previous.exercises,
+    exerciseCount:
+      latestSession?.exerciseCount ?? incoming.exerciseCount ?? previous.exerciseCount,
+    totalSets: latestSession?.totalSets ?? incoming.totalSets ?? previous.totalSets,
+    scheduledFor: latestSession?.scheduledFor ?? incoming.scheduledFor ?? previous.scheduledFor
+  };
 };
 
 const formatScheduleForMessage = (value: string): string => {
@@ -184,11 +264,11 @@ export default function WorkoutsPage() {
       setWorkouts((previous) => {
         const index = previous.findIndex((item) => item.id === savedWorkout.id);
         if (index === -1) {
-          return [savedWorkout, ...previous];
+          return [mergeWorkoutSessions(undefined, savedWorkout), ...previous];
         }
 
         const next = [...previous];
-        next[index] = savedWorkout;
+        next[index] = mergeWorkoutSessions(previous[index], savedWorkout);
         return next;
       });
 
