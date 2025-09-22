@@ -14,6 +14,8 @@ interface WorkoutProgressChartProps {
   points: WorkoutProgressPoint[];
 }
 
+type MetricKey = 'weight' | 'repetitions';
+
 const CHART_WIDTH = 480;
 const CHART_HEIGHT = 240;
 const MARGIN = { top: 24, right: 16, bottom: 40, left: 48 };
@@ -35,33 +37,11 @@ const toLocaleDate = (isoDate: string): string => {
 export default function WorkoutProgressChart({ exerciseName, points }: WorkoutProgressChartProps) {
   const chartData = useMemo(() => {
     if (!Array.isArray(points) || points.length === 0) {
-      return {
-        labels: [] as string[],
-        weightSeries: [] as Array<{ x: number; y: number }>,
-        repetitionSeries: [] as Array<{ x: number; y: number }>,
-        ticks: [] as Array<{ value: number; y: number }>
-      };
+      return null;
     }
-
-    const values = points.flatMap((point) => [point.averageWeight, point.averageRepetitions]);
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-
-    const safeMin = Number.isFinite(minValue) ? minValue : 0;
-    const safeMax = Number.isFinite(maxValue) ? maxValue : safeMin + 1;
-    const sameValue = safeMax - safeMin < 1e-3;
-    const lowerBound = sameValue ? safeMin - 1 : safeMin;
-    const upperBound = sameValue ? safeMax + 1 : safeMax;
-    const valueRange = Math.max(upperBound - lowerBound, 1);
 
     const innerWidth = CHART_WIDTH - MARGIN.left - MARGIN.right;
     const innerHeight = CHART_HEIGHT - MARGIN.top - MARGIN.bottom;
-
-    const positionForValue = (value: number): number => {
-      const ratio = (value - lowerBound) / valueRange;
-      const clamped = Number.isFinite(ratio) ? Math.min(Math.max(ratio, 0), 1) : 0;
-      return MARGIN.top + innerHeight - innerHeight * clamped;
-    };
 
     const xPositions = points.map((_, index) => {
       if (points.length === 1) {
@@ -72,35 +52,55 @@ export default function WorkoutProgressChart({ exerciseName, points }: WorkoutPr
       return MARGIN.left + innerWidth * progress;
     });
 
-    const weightSeries = points.map((point, index) => ({
-      x: xPositions[index],
-      y: positionForValue(point.averageWeight)
-    }));
+    const buildMetricData = (metric: MetricKey) => {
+      const values = points.map((point) =>
+        metric === 'weight' ? point.averageWeight : point.averageRepetitions
+      );
+      const minValue = Math.min(...values);
+      const maxValue = Math.max(...values);
 
-    const repetitionSeries = points.map((point, index) => ({
-      x: xPositions[index],
-      y: positionForValue(point.averageRepetitions)
-    }));
+      const safeMin = Number.isFinite(minValue) ? minValue : 0;
+      const safeMax = Number.isFinite(maxValue) ? maxValue : safeMin + 1;
+      const sameValue = safeMax - safeMin < 1e-3;
+      const lowerBound = sameValue ? safeMin - 1 : safeMin;
+      const upperBound = sameValue ? safeMax + 1 : safeMax;
+      const valueRange = Math.max(upperBound - lowerBound, 1);
 
-    const tickCount = 4;
-    const ticks = Array.from({ length: tickCount + 1 }).map((_, index) => {
-      const ratio = index / tickCount;
-      const value = lowerBound + valueRange * (1 - ratio);
-      return {
-        value,
-        y: MARGIN.top + innerHeight * ratio
+      const positionForValue = (value: number): number => {
+        const ratio = (value - lowerBound) / valueRange;
+        const clamped = Number.isFinite(ratio) ? Math.min(Math.max(ratio, 0), 1) : 0;
+        return MARGIN.top + innerHeight - innerHeight * clamped;
       };
-    });
+
+      const series = points.map((point, index) => ({
+        x: xPositions[index],
+        y: positionForValue(metric === 'weight' ? point.averageWeight : point.averageRepetitions)
+      }));
+
+      const tickCount = 4;
+      const ticks = Array.from({ length: tickCount + 1 }).map((_, index) => {
+        const ratio = index / tickCount;
+        const value = lowerBound + valueRange * (1 - ratio);
+        return {
+          value,
+          y: MARGIN.top + innerHeight * ratio
+        };
+      });
+
+      return { series, ticks };
+    };
 
     return {
       labels: points.map((point) => toLocaleDate(point.date)),
-      weightSeries,
-      repetitionSeries,
-      ticks
+      xPositions,
+      metrics: {
+        weight: buildMetricData('weight'),
+        repetitions: buildMetricData('repetitions')
+      }
     };
   }, [points]);
 
-  if (!chartData.labels.length) {
+  if (!chartData) {
     return (
       <article className={styles.progressCard}>
         <header className={styles.progressHeader}>
@@ -116,66 +116,97 @@ export default function WorkoutProgressChart({ exerciseName, points }: WorkoutPr
       <header className={styles.progressHeader}>
         <h3>{exerciseName}</h3>
         <p className={styles.progressSubtitle}>
-          Evolução das cargas e repetições ao longo das sessões registradas.
+          Acompanhe separadamente a evolução das cargas e das repetições registradas ao longo do
+          tempo.
         </p>
       </header>
-      <div className={styles.chartWrapper}>
-        <svg
-          role="img"
-          aria-label={`Evolução do exercício ${exerciseName}`}
-          width={CHART_WIDTH}
-          height={CHART_HEIGHT}
-          className={styles.chartCanvas}
-        >
-          <desc>
-            Gráfico de linhas mostrando a evolução das cargas e repetições do exercício {exerciseName}.
-          </desc>
-          <rect
-            x={MARGIN.left}
-            y={MARGIN.top}
-            width={CHART_WIDTH - MARGIN.left - MARGIN.right}
-            height={CHART_HEIGHT - MARGIN.top - MARGIN.bottom}
-            className={styles.chartArea}
-          />
-          {chartData.ticks.map((tick) => (
-            <g key={tick.y} className={styles.chartTick}>
-              <line x1={MARGIN.left} x2={CHART_WIDTH - MARGIN.right} y1={tick.y} y2={tick.y} />
-              <text x={MARGIN.left - 8} y={tick.y + 4} className={styles.tickLabel}>
-                {tick.value.toFixed(1)}
-              </text>
-            </g>
-          ))}
-          <polyline points={chartData.weightSeries.map((point) => `${point.x},${point.y}`).join(' ')} className={styles.weightLine} />
-          <polyline
-            points={chartData.repetitionSeries.map((point) => `${point.x},${point.y}`).join(' ')}
-            className={styles.repetitionLine}
-          />
-          {chartData.weightSeries.map((point, index) => (
-            <circle key={`weight-${index}`} cx={point.x} cy={point.y} r={4} className={styles.weightPoint} />
-          ))}
-          {chartData.repetitionSeries.map((point, index) => (
-            <circle key={`rep-${index}`} cx={point.x} cy={point.y} r={4} className={styles.repetitionPoint} />
-          ))}
-          {chartData.labels.map((label, index) => (
-            <text
-              key={`label-${label}-${index}`}
-              x={chartData.weightSeries[index]?.x ?? 0}
-              y={CHART_HEIGHT - MARGIN.bottom + 20}
-              className={styles.axisLabel}
-            >
-              {label}
-            </text>
-          ))}
-        </svg>
+      <div className={styles.chartSections}>
+        {([
+          {
+            key: 'weight' as const,
+            title: 'Carga média (kg)',
+            description: 'Evolução das cargas levantadas nas sessões registradas.',
+            lineClass: styles.weightLine,
+            pointClass: styles.weightPoint
+          },
+          {
+            key: 'repetitions' as const,
+            title: 'Repetições médias',
+            description: 'Evolução da média de repetições realizadas em cada sessão.',
+            lineClass: styles.repetitionLine,
+            pointClass: styles.repetitionPoint
+          }
+        ] satisfies Array<{
+          key: MetricKey;
+          title: string;
+          description: string;
+          lineClass: string;
+          pointClass: string;
+        }>).map((metric) => {
+          const metricData = chartData.metrics[metric.key];
+
+          return (
+            <section key={metric.key} className={styles.metricChart}>
+              <header>
+                <h4 className={styles.metricTitle}>{metric.title}</h4>
+                <p className={styles.metricDescription}>{metric.description}</p>
+              </header>
+              <div className={styles.chartWrapper}>
+                <svg
+                  role="img"
+                  aria-label={`Evolução de ${metric.title.toLowerCase()} do exercício ${exerciseName}`}
+                  width={CHART_WIDTH}
+                  height={CHART_HEIGHT}
+                  className={styles.chartCanvas}
+                >
+                  <desc>
+                    Gráfico de linhas mostrando a evolução de {metric.title.toLowerCase()} do exercício
+                    {` ${exerciseName}`}.
+                  </desc>
+                  <rect
+                    x={MARGIN.left}
+                    y={MARGIN.top}
+                    width={CHART_WIDTH - MARGIN.left - MARGIN.right}
+                    height={CHART_HEIGHT - MARGIN.top - MARGIN.bottom}
+                    className={styles.chartArea}
+                  />
+                  {metricData.ticks.map((tick, index) => (
+                    <g key={`${metric.key}-tick-${index}`} className={styles.chartTick}>
+                      <line x1={MARGIN.left} x2={CHART_WIDTH - MARGIN.right} y1={tick.y} y2={tick.y} />
+                      <text x={MARGIN.left - 8} y={tick.y + 4} className={styles.tickLabel}>
+                        {tick.value.toFixed(1)}
+                      </text>
+                    </g>
+                  ))}
+                  <polyline
+                    points={metricData.series.map((point) => `${point.x},${point.y}`).join(' ')}
+                    className={metric.lineClass}
+                  />
+                  {metricData.series.map((point, index) => (
+                    <circle
+                      key={`${metric.key}-point-${index}`}
+                      cx={point.x}
+                      cy={point.y}
+                      r={4}
+                      className={metric.pointClass}
+                    />
+                  ))}
+                  {chartData.labels.map((label, index) => (
+                    <text
+                      key={`${metric.key}-label-${label}-${index}`}
+                      x={chartData.xPositions[index] ?? 0}
+                      y={CHART_HEIGHT - MARGIN.bottom + 20}
+                      className={styles.axisLabel}
+                    >
+                      {label}
+                    </text>
+                  ))}
+                </svg>
+              </div>
+            </section>
+          );
+        })}
       </div>
-      <footer className={styles.chartLegend}>
-        <span>
-          <span className={styles.weightSwatch} aria-hidden="true" /> Carga média (kg)
-        </span>
-        <span>
-          <span className={styles.repetitionSwatch} aria-hidden="true" /> Repetições médias
-        </span>
-      </footer>
       <table className={styles.summaryTable}>
         <thead>
           <tr>
