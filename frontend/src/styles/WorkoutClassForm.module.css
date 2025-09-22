@@ -148,6 +148,26 @@
   padding: 0 0.25rem;
 }
 
+.exerciseLibraryRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.exerciseLibraryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.saveExerciseFallback {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .exerciseHeader {
   display: grid;
   gap: 1.25rem;
@@ -230,6 +250,69 @@
   background: #c7d2fe;
 }
 
+.saveExerciseButton {
+  background: #ecfccb;
+  color: #3f6212;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  padding: 0.55rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.saveExerciseButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.saveExerciseButton:not(:disabled):hover {
+  background: #d9f99d;
+  border-color: #bef264;
+}
+
+.editorLinkButton {
+  background: #eef2ff;
+  color: #312e81;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.editorLinkButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editorLinkButton:not(:disabled):hover {
+  background: #c7d2fe;
+  border-color: #a5b4fc;
+}
+
+.dangerButton {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.dangerButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dangerButton:not(:disabled):hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
 .removeButton {
   background: transparent;
   border: none;
@@ -267,6 +350,15 @@
   border-radius: 10px;
 }
 
+.inlineSuccess {
+  margin: 0;
+  background: #dcfce7;
+  color: #047857;
+  border: 1px solid #bbf7d0;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+}
+
 .supportMessage {
   margin: 0;
   background: #eff6ff;
@@ -286,10 +378,131 @@
   text-decoration: underline;
 }
 
+.exerciseEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+}
+
+.exerciseEditorHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.exerciseEditorHeader h3 {
+  margin: 0;
+}
+
+.exerciseEditorHeader p {
+  margin: 0.25rem 0 0;
+  color: #1d4ed8;
+}
+
+.editorCloseButton {
+  background: transparent;
+  border: none;
+  color: #1f2937;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.editorCloseButton:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.exerciseEditorGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.exerciseEditorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.exerciseEditorPrimaryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.editorPrimaryButton {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.65rem 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.editorPrimaryButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.editorPrimaryButton:not(:disabled):hover {
+  background: #1d4ed8;
+}
+
+.editorPrimaryButton:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.editorSecondaryButton {
+  background: #e0e7ff;
+  color: #312e81;
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.editorSecondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editorSecondaryButton:not(:disabled):hover {
+  background: #c7d2fe;
+}
+
 @media (max-width: 720px) {
   .header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .exerciseLibraryRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exerciseLibraryActions {
+    justify-content: flex-start;
+  }
+
+  .saveExerciseFallback {
+    justify-content: flex-start;
   }
 
   .exerciseHeader {
@@ -306,8 +519,26 @@
     align-items: stretch;
   }
 
+  .exerciseEditorActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exerciseEditorPrimaryActions {
+    justify-content: stretch;
+  }
+
   .primaryButton,
-  .secondaryButton {
+  .secondaryButton,
+  .saveExerciseButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .editorPrimaryButton,
+  .editorSecondaryButton,
+  .editorLinkButton,
+  .dangerButton {
     width: 100%;
     text-align: center;
   }

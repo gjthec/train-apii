@@ -40,6 +40,46 @@ This project uses the Firebase Web v9 modular SDK exclusively on the client side
 
    Always run `npm run build` before `npm run start` to avoid stale `.next` artifacts.
 
+## Firebase Hosting
+
+The repository already includes the Firebase Hosting configuration files in the monorepo root (`firebase.json` and `.firebaserc`).
+
+1. **Install the Firebase CLI** (globally) if you have not yet:
+
+   ```bash
+   npm install -g firebase-tools
+   ```
+
+2. **Select your Firebase project** by editing `.firebaserc` or running `firebase use --add` so the `default` entry points to the project that will host the app.
+
+3. **Build the static export that Hosting serves**. Inside `frontend/` run:
+
+   ```bash
+   npm run build:hosting
+   ```
+
+   This runs `next build` followed by `next export` and generates the `out/` folder that matches the `public` directory configured in `firebase.json`.
+
+4. **Deploy to Firebase Hosting** with your preferred command. Either call the CLI directly:
+
+   ```bash
+   firebase deploy --only hosting
+   ```
+
+   or reuse the npm script that chains the build and deploy steps:
+
+   ```bash
+   npm run deploy:hosting
+   ```
+
+5. **Optional – preview locally** before deploying using the Hosting emulator:
+
+   ```bash
+   firebase emulators:start --only hosting
+   ```
+
+   The emulator serves the contents of `frontend/out` so you can validate routes and assets prior to publishing.
+
 ## Firebase helpers
 
 The Firebase helpers live in `src/lib/firebase.ts`:

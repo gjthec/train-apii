@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -98,6 +99,34 @@ const sanitizeOptionalString = (value: string | undefined): string | undefined =
 
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const sanitizeOptionalNumberInput = (value: number | string | undefined): number | undefined => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.replace(',', '.').trim();
+    if (!normalized) {
+      return undefined;
+    }
+
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+};
+
+const sanitizeOptionalIntegerInput = (value: number | string | undefined): number | undefined => {
+  const numeric = sanitizeOptionalNumberInput(value);
+  if (typeof numeric !== 'number') {
+    return undefined;
+  }
+
+  const rounded = Math.round(numeric);
+  return Number.isFinite(rounded) ? rounded : undefined;
 };
 
 const formatDateForInput = (date: Date): string => {
@@ -206,6 +235,17 @@ export interface Exercise {
   equipment?: string;
   sets?: number;
   repetitions?: number;
+  rest?: string;
+}
+
+export interface NewExerciseInput {
+  name: string;
+  muscleGroup?: string;
+  modality?: string;
+  description?: string;
+  equipment?: string;
+  sets?: number | string;
+  repetitions?: number | string;
   rest?: string;
 }
 
@@ -734,6 +774,105 @@ export async function deleteWorkoutClass(workoutId: string): Promise<void> {
   const db = getDb();
   const workoutRef = doc(db, `users/${uid}/workouts/${sanitizedId}`);
   await deleteDoc(workoutRef);
+}
+
+export async function createExercise(input: NewExerciseInput): Promise<Exercise> {
+  const name = sanitizeOptionalString(input.name);
+  if (!name) {
+    throw new Error('Informe um nome para o exercício.');
+  }
+
+  const muscleGroup = sanitizeOptionalString(input.muscleGroup);
+  const modality = sanitizeOptionalString(input.modality);
+  const description = sanitizeOptionalString(input.description);
+  const equipment = sanitizeOptionalString(input.equipment);
+  const sets = sanitizeOptionalIntegerInput(input.sets);
+  const repetitions = sanitizeOptionalIntegerInput(input.repetitions);
+  const rest = sanitizeOptionalString(input.rest);
+  const uid = await requireUid();
+  const db = getDb();
+  const exercisesCollection = collection(db, `users/${uid}/exercises`);
+  const docRef = await addDoc(exercisesCollection, {
+    name,
+    ...(muscleGroup ? { muscleGroup } : {}),
+    ...(modality ? { modality } : {}),
+    ...(description ? { description } : {}),
+    ...(equipment ? { equipment } : {}),
+    ...(typeof sets === 'number' ? { sets } : {}),
+    ...(typeof repetitions === 'number' ? { repetitions } : {}),
+    ...(rest ? { rest } : {}),
+    createdAt: serverTimestamp()
+  });
+
+  return {
+    id: docRef.id,
+    name,
+    muscleGroup: muscleGroup ?? undefined,
+    modality: modality ?? undefined,
+    description: description ?? undefined,
+    equipment: equipment ?? undefined,
+    sets: sets ?? undefined,
+    repetitions: repetitions ?? undefined,
+    rest: rest ?? undefined
+  } satisfies Exercise;
+}
+
+export async function updateExercise(
+  exerciseId: string,
+  input: NewExerciseInput
+): Promise<Exercise> {
+  const sanitizedId = sanitizeOptionalString(exerciseId);
+  if (!sanitizedId) {
+    throw new Error('Exercício inválido para edição.');
+  }
+
+  const name = sanitizeOptionalString(input.name);
+  if (!name) {
+    throw new Error('Informe um nome para o exercício.');
+  }
+
+  const muscleGroup = sanitizeOptionalString(input.muscleGroup);
+  const modality = sanitizeOptionalString(input.modality);
+  const description = sanitizeOptionalString(input.description);
+  const equipment = sanitizeOptionalString(input.equipment);
+  const sets = sanitizeOptionalIntegerInput(input.sets);
+  const repetitions = sanitizeOptionalIntegerInput(input.repetitions);
+  const rest = sanitizeOptionalString(input.rest);
+  const uid = await requireUid();
+  const db = getDb();
+  const exerciseRef = doc(db, `users/${uid}/exercises/${sanitizedId}`);
+
+  await updateDoc(exerciseRef, {
+    name,
+    muscleGroup: muscleGroup ?? deleteField(),
+    modality: modality ?? deleteField(),
+    description: description ?? deleteField(),
+    equipment: equipment ?? deleteField(),
+    sets: typeof sets === 'number' ? sets : deleteField(),
+    repetitions: typeof repetitions === 'number' ? repetitions : deleteField(),
+    rest: rest ?? deleteField(),
+    updatedAt: serverTimestamp()
+  });
+
+  const updatedSnapshot = await getDoc(exerciseRef.withConverter(createExerciseConverter()));
+  const data = updatedSnapshot.data();
+  if (!data) {
+    throw new Error('Não foi possível carregar o exercício atualizado.');
+  }
+
+  return data;
+}
+
+export async function deleteExercise(exerciseId: string): Promise<void> {
+  const sanitizedId = sanitizeOptionalString(exerciseId);
+  if (!sanitizedId) {
+    throw new Error('Exercício inválido para exclusão.');
+  }
+
+  const uid = await requireUid();
+  const db = getDb();
+  const exerciseRef = doc(db, `users/${uid}/exercises/${sanitizedId}`);
+  await deleteDoc(exerciseRef);
 }
 
 export async function createMuscleGroupClass(

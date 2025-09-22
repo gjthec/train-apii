@@ -9,6 +9,7 @@ export interface WorkoutExerciseDraft {
   name: string;
   muscleGroup: string;
   notes: string;
+  libraryExerciseId: string | null;
   sets: WorkoutSetDraft[];
 }
 

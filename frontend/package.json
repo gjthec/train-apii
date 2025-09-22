@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:hosting": "next build && next export",
     "start": "next start",
+    "deploy:hosting": "npm run build:hosting && firebase deploy --only hosting",
     "lint": "next lint",
     "format": "prettier --check .",
     "postinstall": "node scripts/link-types.mjs"
