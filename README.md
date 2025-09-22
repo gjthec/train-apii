@@ -185,6 +185,15 @@ A interface web baseada em React está localizada em `./frontend` e acessa diret
    ```
 4. Acesse `http://localhost:3000` no navegador.
 
+### Publicar no Firebase Hosting
+
+1. No diretório `frontend/`, instale o Firebase CLI se ainda não estiver disponível globalmente: `npm install -g firebase-tools`.
+2. Ajuste o projeto padrão em `.firebaserc` (ou execute `firebase use --add`) para apontar para o site desejado.
+3. Gere a versão estática que o Hosting irá servir com `npm run build:hosting`.
+4. Envie os arquivos gerados em `frontend/out` executando `firebase deploy --only hosting` ou simplesmente `npm run deploy:hosting`.
+
+Os arquivos de configuração (`firebase.json` e `.firebaserc`) já estão na raiz do repositório e apontam o Hosting para a saída exportada do Next.js.
+
 ### Telas disponíveis
 
 - **Painel** (`/`): visão geral com atalhos para as demais telas.
