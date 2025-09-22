@@ -14,6 +14,7 @@ const navLinks: Array<{ href: string; label: string }> = [
   { href: '/', label: 'Visão geral' },
   { href: '/exercise-classes', label: 'Aulas' },
   { href: '/workouts', label: 'Treinos' },
+  { href: '/dashboards', label: 'Dashboards' },
   { href: '/muscle-groups', label: 'Grupos musculares' },
   { href: '/exercises', label: 'Exercícios' },
   { href: '/sessions', label: 'Sessões' },

@@ -1,0 +1,210 @@
+.pageSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.filterRow label {
+  font-weight: 600;
+  color: #1f2933;
+}
+
+.selectInput {
+  min-width: 240px;
+  padding: 8px 12px;
+  border: 1px solid #d2d6dc;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #1f2933;
+  font-size: 1rem;
+}
+
+.overviewCard {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.overviewTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.overviewMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.progressGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.progressCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.progressHeader h3 {
+  font-size: 1.05rem;
+  margin: 0;
+  color: #0f172a;
+}
+
+.progressSubtitle {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.chartWrapper {
+  overflow-x: auto;
+}
+
+.chartCanvas {
+  width: 100%;
+  height: auto;
+}
+
+.chartArea {
+  fill: #f8fafc;
+  stroke: #e2e8f0;
+}
+
+.chartTick line {
+  stroke: rgba(148, 163, 184, 0.6);
+  stroke-dasharray: 4;
+}
+
+.chartTick {
+  font-size: 0;
+}
+
+.tickLabel {
+  fill: #475569;
+  font-size: 0.75rem;
+  text-anchor: end;
+}
+
+.weightLine {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 2.5;
+}
+
+.repetitionLine {
+  fill: none;
+  stroke: #059669;
+  stroke-width: 2.5;
+}
+
+.weightPoint {
+  fill: #2563eb;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.repetitionPoint {
+  fill: #059669;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.axisLabel {
+  fill: #334155;
+  font-size: 0.8rem;
+  text-anchor: middle;
+}
+
+.chartLegend {
+  display: flex;
+  gap: 16px;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.weightSwatch,
+.repetitionSwatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  margin-right: 8px;
+}
+
+.weightSwatch {
+  background-color: #2563eb;
+}
+
+.repetitionSwatch {
+  background-color: #059669;
+}
+
+.summaryTable {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.summaryTable th,
+.summaryTable td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.summaryTable tbody tr:last-of-type td {
+  border-bottom: none;
+}
+
+.emptyState {
+  background-color: #fff;
+  border-radius: 16px;
+  border: 1px dashed #cbd5f5;
+  padding: 32px;
+  text-align: center;
+  color: #4b5563;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .progressCard {
+    padding: 16px;
+  }
+
+  .chartLegend {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
