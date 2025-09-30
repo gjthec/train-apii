@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Head from 'next/head';
 import { useCallback, useEffect, useState } from 'react';
-import Layout from '@/components/Layout';
 import {
   getClientAuth,
   requireUid,
@@ -128,109 +127,115 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <Layout title="Autenticação" description="Conecte-se com sua conta Google para sincronizar seus dados.">
+    <div className={styles.page}>
       <Head>
         <title>Train API - Login</title>
       </Head>
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h3>Entrar com Google</h3>
-          <p>
-            Você pode continuar utilizando a autenticação anônima automática ou conectar sua conta Google para sincronizar seus
-            treinos com um usuário permanente.
-          </p>
-          <button
-            type="button"
-            className={styles.googleButton}
-            onClick={handleGoogleLogin}
-            disabled={isProcessing}
-          >
-            <svg
-              aria-hidden="true"
-              focusable="false"
-              role="img"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 533.5 544.3"
-              className={styles.googleIcon}
+      <div className={styles.content}>
+        <header className={styles.header}>
+          <h1>Autenticação</h1>
+          <p>Conecte-se com sua conta Google para sincronizar seus dados.</p>
+        </header>
+        <div className={styles.container}>
+          <section className={styles.card}>
+            <h3>Entrar com Google</h3>
+            <p>
+              Você pode continuar utilizando a autenticação anônima automática ou conectar sua conta Google para sincronizar seus
+              treinos com um usuário permanente.
+            </p>
+            <button
+              type="button"
+              className={styles.googleButton}
+              onClick={handleGoogleLogin}
+              disabled={isProcessing}
             >
-              <path
-                fill="#4285F4"
-                d="M533.5 278.4c0-17.4-1.6-34.1-4.7-50.2H272v95h147.5c-6.4 34.7-25.9 64.1-55.2 83.8v69.7h89.2c52.2-48.1 80-119.1 80-198.3"
-              />
-              <path
-                fill="#34A853"
-                d="M272 544.3c74.7 0 137.4-24.7 183.2-67.6l-89.2-69.7c-24.7 16.6-56.4 26.4-94 26.4-72 0-132.9-48.6-154.7-113.9H27.1v71.6C72.8 483.2 166.1 544.3 272 544.3"
-              />
-              <path
-                fill="#FBBC05"
-                d="M117.3 319.5c-5.6-16.6-8.8-34.4-8.8-52.5s3.2-35.9 8.6-52.5v-71.6H27.1C9.9 191 0 232.4 0 274.9c0 42.5 9.9 83.9 27.1 121.9l90.2-71.5"
-              />
-              <path
-                fill="#EA4335"
-                d="M272 107.7c40.6 0 77 14 105.7 41.5l79.1-79.1C409.3 24.8 346.6 0 272 0 166.1 0 72.8 61.1 27.1 152.5l90.2 71.6C139.1 156.3 200 107.7 272 107.7"
-              />
-            </svg>
-            <span>{isProcessing ? 'Processando...' : 'Entrar com Google'}</span>
-          </button>
-          <button type="button" className={styles.signOutButton} onClick={handleSignOut} disabled={isProcessing}>
-            Sair da conta
-          </button>
-          {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
-        </section>
-
-        <section className={styles.card}>
-          <h3>Status da sessão</h3>
-          <p className={styles.statusLabel} data-status={status}>
-            {status === 'loading' && 'Carregando sessão...'}
-            {status === 'signed-in' && 'Sessão autenticada'}
-            {status === 'signed-out' && 'Nenhum usuário conectado'}
-          </p>
-
-          {userInfo ? (
-            <div className={styles.profile}>
-              {userInfo.photoURL ? (
-                <Image
-                  src={userInfo.photoURL}
-                  alt={userInfo.displayName ?? 'Foto do usuário'}
-                  width={64}
-                  height={64}
-                  className={styles.avatar}
+              <svg
+                aria-hidden="true"
+                focusable="false"
+                role="img"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 533.5 544.3"
+                className={styles.googleIcon}
+              >
+                <path
+                  fill="#4285F4"
+                  d="M533.5 278.4c0-17.4-1.6-34.1-4.7-50.2H272v95h147.5c-6.4 34.7-25.9 64.1-55.2 83.8v69.7h89.2c52.2-48.1 80-119.1 80-198.3"
                 />
-              ) : null}
-              <dl className={styles.profileDetails}>
-                <div>
-                  <dt>UID</dt>
-                  <dd>{userInfo.uid}</dd>
-                </div>
-                {userInfo.displayName ? (
-                  <div>
-                    <dt>Nome</dt>
-                    <dd>{userInfo.displayName}</dd>
-                  </div>
+                <path
+                  fill="#34A853"
+                  d="M272 544.3c74.7 0 137.4-24.7 183.2-67.6l-89.2-69.7c-24.7 16.6-56.4 26.4-94 26.4-72 0-132.9-48.6-154.7-113.9H27.1v71.6C72.8 483.2 166.1 544.3 272 544.3"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M117.3 319.5c-5.6-16.6-8.8-34.4-8.8-52.5s3.2-35.9 8.6-52.5v-71.6H27.1C9.9 191 0 232.4 0 274.9c0 42.5 9.9 83.9 27.1 121.9l90.2-71.5"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M272 107.7c40.6 0 77 14 105.7 41.5l79.1-79.1C409.3 24.8 346.6 0 272 0 166.1 0 72.8 61.1 27.1 152.5l90.2 71.6C139.1 156.3 200 107.7 272 107.7"
+                />
+              </svg>
+              <span>{isProcessing ? 'Processando...' : 'Entrar com Google'}</span>
+            </button>
+            <button type="button" className={styles.signOutButton} onClick={handleSignOut} disabled={isProcessing}>
+              Sair da conta
+            </button>
+            {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
+          </section>
+
+          <section className={styles.card}>
+            <h3>Status da sessão</h3>
+            <p className={styles.statusLabel} data-status={status}>
+              {status === 'loading' && 'Carregando sessão...'}
+              {status === 'signed-in' && 'Sessão autenticada'}
+              {status === 'signed-out' && 'Nenhum usuário conectado'}
+            </p>
+
+            {userInfo ? (
+              <div className={styles.profile}>
+                {userInfo.photoURL ? (
+                  <Image
+                    src={userInfo.photoURL}
+                    alt={userInfo.displayName ?? 'Foto do usuário'}
+                    width={64}
+                    height={64}
+                    className={styles.avatar}
+                  />
                 ) : null}
-                {userInfo.email ? (
+                <dl className={styles.profileDetails}>
                   <div>
-                    <dt>Email</dt>
-                    <dd>{userInfo.email}</dd>
+                    <dt>UID</dt>
+                    <dd>{userInfo.uid}</dd>
                   </div>
-                ) : null}
-                <div>
-                  <dt>Tipo de conta</dt>
-                  <dd>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
-                </div>
-                {userInfo.providerIds.length > 0 ? (
+                  {userInfo.displayName ? (
+                    <div>
+                      <dt>Nome</dt>
+                      <dd>{userInfo.displayName}</dd>
+                    </div>
+                  ) : null}
+                  {userInfo.email ? (
+                    <div>
+                      <dt>Email</dt>
+                      <dd>{userInfo.email}</dd>
+                    </div>
+                  ) : null}
                   <div>
-                    <dt>Provedores</dt>
-                    <dd>{userInfo.providerIds.join(', ')}</dd>
+                    <dt>Tipo de conta</dt>
+                    <dd>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
                   </div>
-                ) : null}
-              </dl>
-            </div>
-          ) : (
-            <p className={styles.emptyProfile}>Nenhuma informação de usuário disponível.</p>
-          )}
-        </section>
+                  {userInfo.providerIds.length > 0 ? (
+                    <div>
+                      <dt>Provedores</dt>
+                      <dd>{userInfo.providerIds.join(', ')}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
+            ) : (
+              <p className={styles.emptyProfile}>Nenhuma informação de usuário disponível.</p>
+            )}
+          </section>
+        </div>
       </div>
-    </Layout>
+    </div>
   );
 }
