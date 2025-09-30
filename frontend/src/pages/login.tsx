@@ -57,7 +57,7 @@ export default function LoginPage() {
             return;
           }
 
-          if (user) {
+          if (user && !user.isAnonymous) {
             const profile: AuthenticatedUserProfile = {
               uid: user.uid,
               displayName: user.displayName,
@@ -102,6 +102,12 @@ export default function LoginPage() {
     setError(null);
     try {
       const profile = await signInWithGoogle();
+      if (profile.isAnonymous) {
+        setUserInfo(null);
+        setStatus('signed-out');
+        setError(new Error('Não foi possível confirmar o login da conta Google. Tente novamente.'));
+        return;
+      }
       setUserInfo(toDisplayUserInfo(profile));
       setStatus('signed-in');
     } catch (err) {
@@ -135,10 +141,7 @@ export default function LoginPage() {
       <div className={styles.container}>
         <section className={styles.card}>
           <h3>Entrar com Google</h3>
-          <p>
-            Você pode continuar utilizando a autenticação anônima automática ou conectar sua conta Google para sincronizar seus
-            treinos com um usuário permanente.
-          </p>
+          <p>Faça login com sua conta Google para acessar o painel de treinos com segurança.</p>
           <button
             type="button"
             className={styles.googleButton}
@@ -172,9 +175,11 @@ export default function LoginPage() {
             </svg>
             <span>{isProcessing ? 'Processando...' : 'Entrar com Google'}</span>
           </button>
-          <button type="button" className={styles.signOutButton} onClick={handleSignOut} disabled={isProcessing}>
-            Sair da conta
-          </button>
+          {userInfo ? (
+            <button type="button" className={styles.signOutButton} onClick={handleSignOut} disabled={isProcessing}>
+              Sair da conta
+            </button>
+          ) : null}
           {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
         </section>
 
