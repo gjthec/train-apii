@@ -93,31 +93,15 @@ export async function requireUid(): Promise<string> {
     throw new Error('requireUid can only be called in the browser.');
   }
 
-  const {
-    browserLocalPersistence,
-    onAuthStateChanged,
-    setPersistence,
-    signInAnonymously
-  } = await import('firebase/auth');
+  const { browserLocalPersistence, onAuthStateChanged, setPersistence } = await import('firebase/auth');
 
   const auth = await getClientAuth();
   await setPersistence(auth, browserLocalPersistence);
 
-  if (!auth.currentUser) {
-    try {
-      await signInAnonymously(auth);
-    } catch (error) {
-      const authError = error as { code?: string; message?: string } | undefined;
-      if (authError?.code === 'auth/operation-not-allowed') {
-        throw new Error('Enable Anonymous sign-in in Firebase Authentication → Sign-in method.');
-      }
-      throw error;
-    }
-  }
-
-  if (auth.currentUser?.uid) {
-    await syncUserProfile(auth.currentUser);
-    return auth.currentUser.uid;
+  const currentUser = auth.currentUser;
+  if (currentUser?.uid && !currentUser.isAnonymous) {
+    await syncUserProfile(currentUser);
+    return currentUser.uid;
   }
 
   return new Promise<string>((resolve, reject) => {
@@ -125,14 +109,16 @@ export async function requireUid(): Promise<string> {
       auth,
       (user) => {
         unsubscribe();
-        if (user?.uid) {
+
+        if (user?.uid && !user.isAnonymous) {
           void syncUserProfile(user).catch((error) => {
             console.error('Failed to sync user profile', error);
           });
           resolve(user.uid);
-        } else {
-          reject(new Error('User is not signed in.'));
+          return;
         }
+
+        reject(new Error('User is not signed in.'));
       },
       (err) => {
         unsubscribe();
