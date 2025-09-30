@@ -11,6 +11,11 @@ import {
   signOutClient,
   type AuthenticatedUserProfile
 } from '@/lib/firebase';
+import {
+  loadRegisteredAccounts,
+  REGISTERED_ACCOUNTS_STORAGE_KEY,
+  type RegisteredAccount
+} from '@/lib/localAccounts';
 
 import type { Unsubscribe } from 'firebase/auth';
 
@@ -45,6 +50,8 @@ export default function LoginPage() {
   const [error, setError] = useState<AuthError>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [registeredAccounts, setRegisteredAccounts] = useState<RegisteredAccount[]>([]);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   const isFullyAuthenticated = useMemo(
     () => status === 'signed-in' && Boolean(userInfo) && !userInfo?.isAnonymous,
@@ -143,6 +150,48 @@ export default function LoginPage() {
     }
   }, [shouldRedirect, isFullyAuthenticated, router]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const updateAccounts = () => {
+      setRegisteredAccounts(loadRegisteredAccounts());
+    };
+
+    updateAccounts();
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key && event.key !== REGISTERED_ACCOUNTS_STORAGE_KEY) {
+        return;
+      }
+      updateAccounts();
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!router.isReady) {
+      return;
+    }
+
+    const { registered } = router.query;
+    const hasJustRegistered = Array.isArray(registered)
+      ? registered.includes('1')
+      : registered === '1';
+
+    if (hasJustRegistered) {
+      setRegistrationSuccess(true);
+      setRegisteredAccounts(loadRegisteredAccounts());
+      void router.replace('/login', undefined, { shallow: true });
+    }
+  }, [router]);
+
   return (
     <div className={styles.page}>
       <Head>
@@ -203,6 +252,9 @@ export default function LoginPage() {
           >
             Encerrar sessão atual
           </button>
+          <Link href="/register" className={styles.registerButton}>
+            Cadastrar nova conta
+          </Link>
           {isFullyAuthenticated ? (
             <Link href="/" className={styles.linkButton}>
               Ir para o app
@@ -210,7 +262,36 @@ export default function LoginPage() {
           ) : null}
         </div>
 
+        {registrationSuccess ? (
+          <p className={styles.successMessage}>
+            Conta cadastrada com sucesso! Ela já está disponível abaixo para acesso rápido.
+          </p>
+        ) : null}
+
         {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
+
+        {registeredAccounts.length > 0 ? (
+          <section className={styles.accountsSection} aria-live="polite">
+            <h2 className={styles.accountsTitle}>Contas cadastradas</h2>
+            <ul className={styles.accountsList}>
+              {registeredAccounts.map((account) => (
+                <li key={account.id} className={styles.accountCard}>
+                  <div className={styles.accountIdentity}>
+                    <span className={styles.accountName}>{account.name}</span>
+                    <span className={styles.accountEmail}>{account.email}</span>
+                  </div>
+                  <span className={styles.accountTimestamp}>
+                    Criada em {new Date(account.createdAt).toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </main>
     </div>
   );
