@@ -2,7 +2,9 @@
 
 import Image from 'next/image';
 import Head from 'next/head';
-import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   getClientAuth,
   requireUid,
@@ -37,10 +39,17 @@ const toDisplayUserInfo = (profile: AuthenticatedUserProfile): DisplayUserInfo =
 });
 
 export default function LoginPage() {
+  const router = useRouter();
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [userInfo, setUserInfo] = useState<DisplayUserInfo | null>(null);
   const [error, setError] = useState<AuthError>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+
+  const isFullyAuthenticated = useMemo(
+    () => status === 'signed-in' && Boolean(userInfo) && !userInfo?.isAnonymous,
+    [status, userInfo]
+  );
 
   useEffect(() => {
     let unsubscribe: Unsubscribe | undefined;
@@ -103,6 +112,7 @@ export default function LoginPage() {
       const profile = await signInWithGoogle();
       setUserInfo(toDisplayUserInfo(profile));
       setStatus('signed-in');
+      setShouldRedirect(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível autenticar com o Google.';
       setError(new Error(message));
@@ -125,6 +135,12 @@ export default function LoginPage() {
       setIsProcessing(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (shouldRedirect && isFullyAuthenticated) {
+      void router.replace('/');
+    }
+  }, [shouldRedirect, isFullyAuthenticated, router]);
 
   return (
     <div className={styles.page}>
@@ -179,6 +195,11 @@ export default function LoginPage() {
             <button type="button" className={styles.signOutButton} onClick={handleSignOut} disabled={isProcessing}>
               Sair da conta
             </button>
+            {isFullyAuthenticated ? (
+              <Link href="/" className={styles.continueLink}>
+                Ir para o app
+              </Link>
+            ) : null}
             {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
           </section>
 
