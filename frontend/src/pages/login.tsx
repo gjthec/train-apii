@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -144,15 +143,6 @@ export default function LoginPage() {
     }
   }, [shouldRedirect, isFullyAuthenticated, router]);
 
-  const statusClassName = [
-    styles.statusText,
-    status === 'signed-in'
-      ? styles.statusSignedIn
-      : status === 'signed-out'
-        ? styles.statusSignedOut
-        : styles.statusLoading
-  ].join(' ');
-
   return (
     <div className={styles.page}>
       <Head>
@@ -221,61 +211,6 @@ export default function LoginPage() {
         </div>
 
         {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
-
-        <section className={styles.sessionCard}>
-          <header className={styles.sessionHeader}>
-            <h2 className={styles.sessionTitle}>Status da sessão</h2>
-            <p className={statusClassName}>
-              {status === 'loading' && 'Carregando sessão...'}
-              {status === 'signed-in' && 'Sessão autenticada'}
-              {status === 'signed-out' && 'Nenhum usuário conectado'}
-            </p>
-          </header>
-
-          {userInfo ? (
-            <div className={styles.sessionContent}>
-              {userInfo.photoURL ? (
-                <Image
-                  src={userInfo.photoURL}
-                  alt={userInfo.displayName ?? 'Foto do usuário'}
-                  width={64}
-                  height={64}
-                  className={styles.avatar}
-                />
-              ) : null}
-              <dl className={styles.infoGrid}>
-                <div className={styles.infoItem}>
-                  <dt className={styles.infoLabel}>UID</dt>
-                  <dd className={styles.infoValue}>{userInfo.uid}</dd>
-                </div>
-                {userInfo.displayName ? (
-                  <div className={styles.infoItem}>
-                    <dt className={styles.infoLabel}>Nome</dt>
-                    <dd className={styles.infoValue}>{userInfo.displayName}</dd>
-                  </div>
-                ) : null}
-                {userInfo.email ? (
-                  <div className={styles.infoItem}>
-                    <dt className={styles.infoLabel}>Email</dt>
-                    <dd className={styles.infoValue}>{userInfo.email}</dd>
-                  </div>
-                ) : null}
-                <div className={styles.infoItem}>
-                  <dt className={styles.infoLabel}>Tipo de conta</dt>
-                  <dd className={styles.infoValue}>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
-                </div>
-                {userInfo.providerIds.length > 0 ? (
-                  <div className={styles.infoItem}>
-                    <dt className={styles.infoLabel}>Provedores</dt>
-                    <dd className={styles.infoValue}>{userInfo.providerIds.join(', ')}</dd>
-                  </div>
-                ) : null}
-              </dl>
-            </div>
-          ) : (
-            <p className={styles.userPlaceholder}>Nenhuma informação de usuário disponível.</p>
-          )}
-        </section>
       </main>
     </div>
   );
