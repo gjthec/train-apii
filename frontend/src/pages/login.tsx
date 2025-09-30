@@ -15,6 +15,8 @@ import {
 
 import type { Unsubscribe } from 'firebase/auth';
 
+import styles from '@/styles/Login.module.css';
+
 interface DisplayUserInfo {
   uid: string;
   displayName?: string;
@@ -90,7 +92,8 @@ export default function LoginPage() {
         if (!active) {
           return;
         }
-        const message = authError instanceof Error ? authError.message : 'Não foi possível carregar a autenticação.';
+        const message =
+          authError instanceof Error ? authError.message : 'Não foi possível carregar a autenticação.';
         setError(new Error(message));
         setStatus('signed-out');
       }
@@ -141,52 +144,50 @@ export default function LoginPage() {
     }
   }, [shouldRedirect, isFullyAuthenticated, router]);
 
-  const statusAccent =
+  const statusClassName = [
+    styles.statusText,
     status === 'signed-in'
-      ? 'text-emerald-300'
+      ? styles.statusSignedIn
       : status === 'signed-out'
-        ? 'text-amber-300'
-        : 'text-slate-300';
+        ? styles.statusSignedOut
+        : styles.statusLoading
+  ].join(' ');
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950">
+    <div className={styles.page}>
       <Head>
         <title>Train API - Login</title>
       </Head>
-      <div className="absolute -left-32 top-16 h-[520px] w-[520px] rounded-full bg-brand-500/30 blur-3xl" aria-hidden />
-      <div className="absolute right-[-20%] top-1/3 h-[580px] w-[580px] rounded-full bg-indigo-500/20 blur-3xl" aria-hidden />
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-20 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
-        <section className="max-w-2xl text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-brand-100 shadow-lg shadow-brand-500/20">
-            Train API
-          </div>
-          <h1 className="mt-8 text-4xl font-semibold leading-tight text-white sm:text-5xl">
-            Seu hub inteligente de treinos
-          </h1>
-          <p className="mt-4 text-lg text-slate-300">
+      <div className={styles.glowOne} aria-hidden />
+      <div className={styles.glowTwo} aria-hidden />
+      <div className={styles.content}>
+        <section className={styles.hero}>
+          <div className={styles.heroBadge}>Train API</div>
+          <h1 className={styles.heroTitle}>Seu hub inteligente de treinos</h1>
+          <p className={styles.heroSubtitle}>
             Planeje, acompanhe e sincronize os treinos da sua equipe com uma experiência envolvente e sem complicações.
           </p>
-          <ul className="mt-10 grid gap-6 text-left sm:grid-cols-2">
-            <li className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200 shadow-xl shadow-slate-900/30 backdrop-blur">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
-                <svg viewBox="0 0 24 24" role="img" className="h-5 w-5 fill-current">
-                  <path d="M9 12.75 6.75 10.5 5.69 11.56 9 14.87 18.31 5.56 17.25 4.5z" />
+          <ul className={styles.features}>
+            <li className={styles.feature}>
+              <span className={styles.featureIcon}>
+                <svg viewBox="0 0 24 24" role="img" width={20} height={20}>
+                  <path d="M9 12.75 6.75 10.5 5.69 11.56 9 14.87 18.31 5.56 17.25 4.5z" fill="currentColor" />
                 </svg>
               </span>
               <span>Sincronização segura entre usuários convidados e treinadores.</span>
             </li>
-            <li className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200 shadow-xl shadow-slate-900/30 backdrop-blur">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
-                <svg viewBox="0 0 24 24" role="img" className="h-5 w-5 fill-current">
-                  <path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7z" />
+            <li className={styles.feature}>
+              <span className={styles.featureIcon}>
+                <svg viewBox="0 0 24 24" role="img" width={20} height={20}>
+                  <path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7z" fill="currentColor" />
                 </svg>
               </span>
               <span>Histórico completo para você continuar exatamente de onde parou.</span>
             </li>
-            <li className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200 shadow-xl shadow-slate-900/30 backdrop-blur sm:col-span-2">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/20 text-brand-200">
-                <svg viewBox="0 0 24 24" role="img" className="h-5 w-5 fill-current">
-                  <path d="M5 5h14v2H5zm2 6h10v2H7zm-2 6h14v2H5z" />
+            <li className={styles.feature}>
+              <span className={styles.featureIcon}>
+                <svg viewBox="0 0 24 24" role="img" width={20} height={20}>
+                  <path d="M5 5h14v2H5zm2 6h10v2H7zm-2 6h14v2H5z" fill="currentColor" />
                 </svg>
               </span>
               <span>Interface pensada para deixar o foco no desempenho da equipe.</span>
@@ -194,37 +195,40 @@ export default function LoginPage() {
           </ul>
         </section>
 
-        <div className="w-full max-w-xl rounded-[2.5rem] border border-white/10 bg-white/10 p-10 shadow-2xl shadow-slate-950/40 backdrop-blur">
-          <header className="space-y-3 text-center">
-            <h2 className="text-2xl font-semibold text-white">Autenticação</h2>
-            <p className="text-sm text-slate-300">
+        <div className={styles.panel}>
+          <header className={styles.panelHeader}>
+            <h2 className={styles.panelTitle}>Autenticação</h2>
+            <p className={styles.panelSubtitle}>
               Conecte-se com sua conta Google para desbloquear a melhor experiência da plataforma.
             </p>
           </header>
-          <div className="mt-10 grid gap-8">
-            <section className="space-y-6 rounded-3xl border border-white/10 bg-slate-900/60 p-8 shadow-lg shadow-slate-950/50">
-              <div className="space-y-2">
-                <h3 className="text-xl font-medium text-white">Entrar com Google</h3>
-                <p className="text-sm text-slate-300">
+
+          <div className={styles.cardStack}>
+            <section className={styles.card}>
+              <div className={styles.cardHeading}>
+                <h3 className={styles.cardTitle}>Entrar com Google</h3>
+                <p className={styles.cardDescription}>
                   Você pode continuar utilizando a autenticação anônima automática ou conectar sua conta Google para sincronizar seus
                   treinos com um usuário permanente.
                 </p>
               </div>
-              <div className="flex flex-col gap-3">
+
+              <div className={styles.buttonGroup}>
                 <button
                   type="button"
-                  className="group inline-flex items-center justify-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-brand-500/30 transition hover:-translate-y-0.5 hover:shadow-brand-500/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 disabled:pointer-events-none disabled:opacity-70"
+                  className={styles.buttonPrimary}
                   onClick={handleGoogleLogin}
                   disabled={isProcessing}
                 >
-                  <span className="flex h-5 w-5 items-center justify-center">
+                  <span className={styles.googleIcon}>
                     <svg
                       aria-hidden="true"
                       focusable="false"
                       role="img"
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 533.5 544.3"
-                      className="h-full w-full"
+                      width="100%"
+                      height="100%"
                     >
                       <path
                         fill="#4285F4"
@@ -248,32 +252,26 @@ export default function LoginPage() {
                 </button>
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-medium text-slate-200 transition hover:border-white/40 hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:pointer-events-none disabled:opacity-60"
+                  className={styles.buttonSecondary}
                   onClick={handleSignOut}
                   disabled={isProcessing}
                 >
                   Sair da conta
                 </button>
                 {isFullyAuthenticated ? (
-                  <Link
-                    href="/"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-500/20 px-6 py-3 text-sm font-semibold text-brand-100 transition hover:bg-brand-500/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
-                  >
+                  <Link href="/" className={styles.linkButton}>
                     Ir para o app
                   </Link>
                 ) : null}
               </div>
-              {error ? (
-                <p className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  {error.message}
-                </p>
-              ) : null}
+
+              {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
             </section>
 
-            <section className="space-y-6 rounded-3xl border border-white/10 bg-slate-900/60 p-8 shadow-lg shadow-slate-950/50">
-              <div className="space-y-2">
-                <h3 className="text-xl font-medium text-white">Status da sessão</h3>
-                <p className={`text-sm font-medium ${statusAccent}`}>
+            <section className={styles.card}>
+              <div className={styles.cardHeading}>
+                <h3 className={styles.cardTitle}>Status da sessão</h3>
+                <p className={statusClassName}>
                   {status === 'loading' && 'Carregando sessão...'}
                   {status === 'signed-in' && 'Sessão autenticada'}
                   {status === 'signed-out' && 'Nenhum usuário conectado'}
@@ -281,49 +279,47 @@ export default function LoginPage() {
               </div>
 
               {userInfo ? (
-                <div className="flex flex-col gap-6 rounded-2xl border border-white/5 bg-slate-950/40 p-6 shadow-inner shadow-slate-900/60">
+                <div className={styles.userInfo}>
                   {userInfo.photoURL ? (
                     <Image
                       src={userInfo.photoURL}
                       alt={userInfo.displayName ?? 'Foto do usuário'}
                       width={64}
                       height={64}
-                      className="h-16 w-16 rounded-full border border-white/10 object-cover shadow-lg shadow-slate-950/50"
+                      className={styles.avatar}
                     />
                   ) : null}
-                  <dl className="grid gap-4 text-sm text-slate-200 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <dt className="text-xs uppercase tracking-wide text-slate-400">UID</dt>
-                      <dd className="font-mono text-xs text-slate-200 break-all">{userInfo.uid}</dd>
+                  <dl className={styles.infoGrid}>
+                    <div className={styles.infoItem}>
+                      <dt className={styles.infoLabel}>UID</dt>
+                      <dd className={styles.infoValue}>{userInfo.uid}</dd>
                     </div>
                     {userInfo.displayName ? (
-                      <div className="space-y-1">
-                        <dt className="text-xs uppercase tracking-wide text-slate-400">Nome</dt>
-                        <dd>{userInfo.displayName}</dd>
+                      <div className={styles.infoItem}>
+                        <dt className={styles.infoLabel}>Nome</dt>
+                        <dd className={styles.infoValue}>{userInfo.displayName}</dd>
                       </div>
                     ) : null}
                     {userInfo.email ? (
-                      <div className="space-y-1">
-                        <dt className="text-xs uppercase tracking-wide text-slate-400">Email</dt>
-                        <dd>{userInfo.email}</dd>
+                      <div className={styles.infoItem}>
+                        <dt className={styles.infoLabel}>Email</dt>
+                        <dd className={styles.infoValue}>{userInfo.email}</dd>
                       </div>
                     ) : null}
-                    <div className="space-y-1">
-                      <dt className="text-xs uppercase tracking-wide text-slate-400">Tipo de conta</dt>
-                      <dd>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
+                    <div className={styles.infoItem}>
+                      <dt className={styles.infoLabel}>Tipo de conta</dt>
+                      <dd className={styles.infoValue}>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
                     </div>
                     {userInfo.providerIds.length > 0 ? (
-                      <div className="space-y-1 sm:col-span-2">
-                        <dt className="text-xs uppercase tracking-wide text-slate-400">Provedores</dt>
-                        <dd>{userInfo.providerIds.join(', ')}</dd>
+                      <div className={styles.infoItem}>
+                        <dt className={styles.infoLabel}>Provedores</dt>
+                        <dd className={styles.infoValue}>{userInfo.providerIds.join(', ')}</dd>
                       </div>
                     ) : null}
                   </dl>
                 </div>
               ) : (
-                <p className="rounded-2xl border border-white/5 bg-slate-950/30 p-6 text-sm text-slate-300">
-                  Nenhuma informação de usuário disponível.
-                </p>
+                <p className={styles.userPlaceholder}>Nenhuma informação de usuário disponível.</p>
               )}
             </section>
           </div>
