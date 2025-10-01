@@ -1,9 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import Layout from '@/components/Layout';
 import {
   getClientAuth,
   requireUid,
@@ -128,16 +127,16 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <Layout title="Autenticação" description="Conecte-se com sua conta Google para sincronizar seus dados.">
+    <>
       <Head>
         <title>Train API - Login</title>
       </Head>
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h3>Entrar com Google</h3>
-          <p>
-            Você pode continuar utilizando a autenticação anônima automática ou conectar sua conta Google para sincronizar seus
-            treinos com um usuário permanente.
+      <div className={styles.pageBackground}>
+        <div className={styles.panel}>
+          <span className={styles.brandChip}>Train API</span>
+          <h1>Acesse sua conta</h1>
+          <p className={styles.subtitle}>
+            Entre com o Google para sincronizar treinos e continuar de onde parou.
           </p>
           <button
             type="button"
@@ -172,31 +171,33 @@ export default function LoginPage() {
             </svg>
             <span>{isProcessing ? 'Processando...' : 'Entrar com Google'}</span>
           </button>
-          <button type="button" className={styles.signOutButton} onClick={handleSignOut} disabled={isProcessing}>
-            Sair da conta
+          <button
+            type="button"
+            className={styles.signOutButton}
+            onClick={handleSignOut}
+            disabled={isProcessing}
+          >
+            Encerrar sessão atual
           </button>
+          <a
+            className={styles.secondaryLink}
+            href="https://accounts.google.com/signup"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Cadastrar nova conta
+          </a>
+          <Link className={styles.secondaryLink} href="/">
+            Ir para o app
+          </Link>
           {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
-        </section>
-
-        <section className={styles.card}>
-          <h3>Status da sessão</h3>
-          <p className={styles.statusLabel} data-status={status}>
-            {status === 'loading' && 'Carregando sessão...'}
-            {status === 'signed-in' && 'Sessão autenticada'}
-            {status === 'signed-out' && 'Nenhum usuário conectado'}
-          </p>
-
-          {userInfo ? (
-            <div className={styles.profile}>
-              {userInfo.photoURL ? (
-                <Image
-                  src={userInfo.photoURL}
-                  alt={userInfo.displayName ?? 'Foto do usuário'}
-                  width={64}
-                  height={64}
-                  className={styles.avatar}
-                />
-              ) : null}
+          <div className={styles.sessionInfo}>
+            <span className={styles.statusLabel} data-status={status}>
+              {status === 'loading' && 'Carregando sessão...'}
+              {status === 'signed-in' && 'Sessão autenticada'}
+              {status === 'signed-out' && 'Nenhum usuário conectado'}
+            </span>
+            {userInfo ? (
               <dl className={styles.profileDetails}>
                 <div>
                   <dt>UID</dt>
@@ -225,12 +226,12 @@ export default function LoginPage() {
                   </div>
                 ) : null}
               </dl>
-            </div>
-          ) : (
-            <p className={styles.emptyProfile}>Nenhuma informação de usuário disponível.</p>
-          )}
-        </section>
+            ) : (
+              <p className={styles.emptyProfile}>Nenhuma informação de usuário disponível.</p>
+            )}
+          </div>
+        </div>
       </div>
-    </Layout>
+    </>
   );
 }
