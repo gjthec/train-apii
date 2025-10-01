@@ -18,7 +18,7 @@ const navLinks: Array<{ href: string; label: string }> = [
   { href: '/muscle-groups', label: 'Grupos musculares' },
   { href: '/exercises', label: 'Exercícios' },
   { href: '/sessions', label: 'Sessões' },
-  { href: '/login', label: 'Login' }
+  { href: '/logout', label: 'Logout' }
 ];
 
 export default function Layout({ title, description, children }: LayoutProps) {
