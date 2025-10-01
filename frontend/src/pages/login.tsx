@@ -1,13 +1,11 @@
 'use client';
 
 import Head from 'next/head';
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import {
   getClientAuth,
   requireUid,
   signInWithGoogle,
-  signOutClient,
   type AuthenticatedUserProfile
 } from '@/lib/firebase';
 import styles from '@/styles/Login.module.css';
@@ -111,20 +109,7 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleSignOut = useCallback(async () => {
-    setIsProcessing(true);
-    setError(null);
-    try {
-      await signOutClient();
-      setUserInfo(null);
-      setStatus('signed-out');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Não foi possível encerrar a sessão.';
-      setError(new Error(message));
-    } finally {
-      setIsProcessing(false);
-    }
-  }, []);
+  const shouldShowSessionInfo = status !== 'signed-out' || userInfo;
 
   return (
     <>
@@ -171,14 +156,6 @@ export default function LoginPage() {
             </svg>
             <span>{isProcessing ? 'Processando...' : 'Entrar com Google'}</span>
           </button>
-          <button
-            type="button"
-            className={styles.signOutButton}
-            onClick={handleSignOut}
-            disabled={isProcessing}
-          >
-            Encerrar sessão atual
-          </button>
           <a
             className={styles.secondaryLink}
             href="https://accounts.google.com/signup"
@@ -187,49 +164,49 @@ export default function LoginPage() {
           >
             Cadastrar nova conta
           </a>
-          <Link className={styles.secondaryLink} href="/">
-            Ir para o app
-          </Link>
           {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
-          <div className={styles.sessionInfo}>
-            <span className={styles.statusLabel} data-status={status}>
-              {status === 'loading' && 'Carregando sessão...'}
-              {status === 'signed-in' && 'Sessão autenticada'}
-              {status === 'signed-out' && 'Nenhum usuário conectado'}
-            </span>
-            {userInfo ? (
-              <dl className={styles.profileDetails}>
-                <div>
-                  <dt>UID</dt>
-                  <dd>{userInfo.uid}</dd>
-                </div>
-                {userInfo.displayName ? (
+          {shouldShowSessionInfo ? (
+            <div className={styles.sessionInfo}>
+              {status === 'loading' || status === 'signed-in' ? (
+                <span
+                  className={styles.statusLabel}
+                  data-status={status === 'loading' ? 'loading' : 'signed-in'}
+                >
+                  {status === 'loading' ? 'Carregando sessão...' : 'Sessão autenticada'}
+                </span>
+              ) : null}
+              {userInfo ? (
+                <dl className={styles.profileDetails}>
                   <div>
-                    <dt>Nome</dt>
-                    <dd>{userInfo.displayName}</dd>
+                    <dt>UID</dt>
+                    <dd>{userInfo.uid}</dd>
                   </div>
-                ) : null}
-                {userInfo.email ? (
+                  {userInfo.displayName ? (
+                    <div>
+                      <dt>Nome</dt>
+                      <dd>{userInfo.displayName}</dd>
+                    </div>
+                  ) : null}
+                  {userInfo.email ? (
+                    <div>
+                      <dt>Email</dt>
+                      <dd>{userInfo.email}</dd>
+                    </div>
+                  ) : null}
                   <div>
-                    <dt>Email</dt>
-                    <dd>{userInfo.email}</dd>
+                    <dt>Tipo de conta</dt>
+                    <dd>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
                   </div>
-                ) : null}
-                <div>
-                  <dt>Tipo de conta</dt>
-                  <dd>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
-                </div>
-                {userInfo.providerIds.length > 0 ? (
-                  <div>
-                    <dt>Provedores</dt>
-                    <dd>{userInfo.providerIds.join(', ')}</dd>
-                  </div>
-                ) : null}
-              </dl>
-            ) : (
-              <p className={styles.emptyProfile}>Nenhuma informação de usuário disponível.</p>
-            )}
-          </div>
+                  {userInfo.providerIds.length > 0 ? (
+                    <div>
+                      <dt>Provedores</dt>
+                      <dd>{userInfo.providerIds.join(', ')}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </>

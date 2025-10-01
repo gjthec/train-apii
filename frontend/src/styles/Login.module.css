@@ -82,28 +82,6 @@
   height: 22px;
 }
 
-.signOutButton {
-  padding: 0.8rem 1.25rem;
-  border-radius: 999px;
-  border: 1px solid rgba(248, 113, 113, 0.45);
-  background: rgba(248, 113, 113, 0.1);
-  color: #fecaca;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
-}
-
-.signOutButton:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: rgba(248, 113, 113, 0.8);
-  background: rgba(248, 113, 113, 0.18);
-}
-
-.signOutButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .secondaryLink {
   display: inline-flex;
   justify-content: center;
@@ -155,11 +133,6 @@
   color: #bbf7d0;
 }
 
-.statusLabel[data-status='signed-out'] {
-  background: rgba(248, 113, 113, 0.2);
-  color: #fecaca;
-}
-
 .profileDetails {
   display: grid;
   gap: 0.75rem;
@@ -183,12 +156,6 @@
   margin: 0;
   font-size: 0.95rem;
   word-break: break-all;
-}
-
-.emptyProfile {
-  margin: 0;
-  color: rgba(148, 163, 184, 0.85);
-  font-size: 0.95rem;
 }
 
 @media (max-width: 640px) {
