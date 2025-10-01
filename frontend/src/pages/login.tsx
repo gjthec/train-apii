@@ -1,44 +1,23 @@
 'use client';
 
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  getClientAuth,
-  requireUid,
-  signInWithGoogle,
-  type AuthenticatedUserProfile
-} from '@/lib/firebase';
+import { getClientAuth, requireUid, signInWithGoogle } from '@/lib/firebase';
 import styles from '@/styles/Login.module.css';
 
 import type { Unsubscribe } from 'firebase/auth';
-
-interface DisplayUserInfo {
-  uid: string;
-  displayName?: string;
-  email?: string;
-  photoURL?: string;
-  isAnonymous: boolean;
-  providerIds: readonly string[];
-}
 
 type AuthStatus = 'loading' | 'signed-in' | 'signed-out';
 
 type AuthError = Error | null;
 
-const toDisplayUserInfo = (profile: AuthenticatedUserProfile): DisplayUserInfo => ({
-  uid: profile.uid,
-  displayName: profile.displayName ?? undefined,
-  email: profile.email ?? undefined,
-  photoURL: profile.photoURL ?? undefined,
-  isAnonymous: profile.isAnonymous,
-  providerIds: profile.providerIds
-});
-
 export default function LoginPage() {
   const [status, setStatus] = useState<AuthStatus>('loading');
-  const [userInfo, setUserInfo] = useState<DisplayUserInfo | null>(null);
   const [error, setError] = useState<AuthError>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     let unsubscribe: Unsubscribe | undefined;
@@ -55,24 +34,12 @@ export default function LoginPage() {
           }
 
           if (user) {
-            const profile: AuthenticatedUserProfile = {
-              uid: user.uid,
-              displayName: user.displayName,
-              email: user.email,
-              photoURL: user.photoURL,
-              providerIds: user.providerData
-                .map((info) => info?.providerId)
-                .filter((providerId): providerId is string => Boolean(providerId)),
-              isAnonymous: user.isAnonymous
-            };
-            setUserInfo(toDisplayUserInfo(profile));
             setStatus('signed-in');
             setError(null);
             void requireUid().catch(() => {
               // ignore errors because we already have a user session
             });
           } else {
-            setUserInfo(null);
             setStatus('signed-out');
           }
         });
@@ -98,8 +65,7 @@ export default function LoginPage() {
     setIsProcessing(true);
     setError(null);
     try {
-      const profile = await signInWithGoogle();
-      setUserInfo(toDisplayUserInfo(profile));
+      await signInWithGoogle();
       setStatus('signed-in');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível autenticar com o Google.';
@@ -109,7 +75,14 @@ export default function LoginPage() {
     }
   }, []);
 
-  const shouldShowSessionInfo = status !== 'signed-out' || userInfo;
+  useEffect(() => {
+    if (status === 'signed-in' && !hasRedirected) {
+      setHasRedirected(true);
+      void router.replace('/');
+    }
+  }, [status, hasRedirected, router]);
+
+  const statusMessage = status === 'loading' ? 'Verificando sessão...' : status === 'signed-in' ? 'Redirecionando...' : null;
 
   return (
     <>
@@ -165,48 +138,7 @@ export default function LoginPage() {
             Cadastrar nova conta
           </a>
           {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
-          {shouldShowSessionInfo ? (
-            <div className={styles.sessionInfo}>
-              {status === 'loading' || status === 'signed-in' ? (
-                <span
-                  className={styles.statusLabel}
-                  data-status={status === 'loading' ? 'loading' : 'signed-in'}
-                >
-                  {status === 'loading' ? 'Carregando sessão...' : 'Sessão autenticada'}
-                </span>
-              ) : null}
-              {userInfo ? (
-                <dl className={styles.profileDetails}>
-                  <div>
-                    <dt>UID</dt>
-                    <dd>{userInfo.uid}</dd>
-                  </div>
-                  {userInfo.displayName ? (
-                    <div>
-                      <dt>Nome</dt>
-                      <dd>{userInfo.displayName}</dd>
-                    </div>
-                  ) : null}
-                  {userInfo.email ? (
-                    <div>
-                      <dt>Email</dt>
-                      <dd>{userInfo.email}</dd>
-                    </div>
-                  ) : null}
-                  <div>
-                    <dt>Tipo de conta</dt>
-                    <dd>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
-                  </div>
-                  {userInfo.providerIds.length > 0 ? (
-                    <div>
-                      <dt>Provedores</dt>
-                      <dd>{userInfo.providerIds.join(', ')}</dd>
-                    </div>
-                  ) : null}
-                </dl>
-              ) : null}
-            </div>
-          ) : null}
+          {statusMessage ? <p className={styles.statusMessage}>{statusMessage}</p> : null}
         </div>
       </div>
     </>

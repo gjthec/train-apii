@@ -107,55 +107,10 @@
   font-size: 0.95rem;
 }
 
-.sessionInfo {
-  display: grid;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(15, 23, 42, 0.6);
-  border-radius: 24px;
-  border: 1px solid rgba(59, 130, 246, 0.18);
-}
-
-.statusLabel {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  background: rgba(148, 163, 184, 0.18);
-  color: #f1f5f9;
-}
-
-.statusLabel[data-status='signed-in'] {
-  background: rgba(16, 185, 129, 0.22);
-  color: #bbf7d0;
-}
-
-.profileDetails {
-  display: grid;
-  gap: 0.75rem;
+.statusMessage {
   margin: 0;
-  color: #e2e8f0;
-}
-
-.profileDetails div {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.profileDetails dt {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(148, 163, 184, 0.85);
-}
-
-.profileDetails dd {
-  margin: 0;
+  color: #cbd5f5;
   font-size: 0.95rem;
-  word-break: break-all;
 }
 
 @media (max-width: 640px) {
