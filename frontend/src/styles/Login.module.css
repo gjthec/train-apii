@@ -1,146 +1,266 @@
-.container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin: 0 auto;
-  width: 100%;
+.page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  background: radial-gradient(circle at 20% 20%, rgba(96, 165, 250, 0.22), transparent 60%),
+    radial-gradient(circle at 80% 0%, rgba(165, 180, 252, 0.18), transparent 65%),
+    radial-gradient(circle at 10% 90%, rgba(34, 211, 238, 0.14), transparent 55%),
+    #020617;
+  overflow: hidden;
 }
 
-.card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-  padding: 1.75rem;
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.9));
+  opacity: 0.8;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  padding: clamp(2.5rem, 5vw, 3.25rem);
+  border-radius: 32px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 30px 70px rgba(2, 6, 23, 0.65);
+  backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2rem;
 }
 
-.card h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #0f172a;
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
 }
 
-.card p {
-  margin: 0;
-  line-height: 1.5;
-  color: #334155;
-}
-
-.googleButton {
+.logoMark {
+  align-self: center;
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
   justify-content: center;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.85rem;
   border-radius: 999px;
-  padding: 0.75rem 1.5rem;
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.3rem);
   font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.buttonPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.95rem 1.5rem;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, #f8fafc, #cbd5f5);
   color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  box-shadow: 0 20px 45px rgba(148, 163, 184, 0.32);
 }
 
-.googleButton:hover:not(:disabled) {
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
-  transform: translateY(-1px);
-}
-
-.googleButton:disabled {
+.buttonPrimary:disabled {
+  opacity: 0.65;
   cursor: not-allowed;
-  opacity: 0.6;
+  box-shadow: none;
+}
+
+.buttonPrimary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 24px 55px rgba(148, 163, 184, 0.38);
+}
+
+.buttonPrimary:not(:disabled):active {
+  transform: translateY(0);
 }
 
 .googleIcon {
-  width: 20px;
-  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  overflow: hidden;
 }
 
-.signOutButton {
-  align-self: flex-start;
-  background: transparent;
-  border: none;
-  color: #ef4444;
+.buttonSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+  color: rgba(226, 232, 240, 0.8);
+  font-size: 0.95rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  padding: 0.25rem 0;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
-.signOutButton:hover:not(:disabled) {
-  text-decoration: underline;
+.buttonSecondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonSecondary:not(:disabled):hover {
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.registerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  background: rgba(99, 102, 241, 0.14);
+  color: #c7d2fe;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.registerButton:hover {
+  background: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 12px 35px rgba(99, 102, 241, 0.32);
+  transform: translateY(-1px);
+}
+
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.95rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(94, 234, 212, 0.45);
+  background: rgba(45, 212, 191, 0.12);
+  color: #99f6e4;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.linkButton:hover {
+  background: rgba(45, 212, 191, 0.18);
+  box-shadow: 0 12px 35px rgba(45, 212, 191, 0.3);
+  transform: translateY(-1px);
 }
 
 .errorMessage {
-  color: #dc2626;
-  font-size: 0.9rem;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(248, 113, 113, 0.16);
+  color: #fecaca;
+  font-size: 0.85rem;
+  line-height: 1.55;
 }
 
-.statusLabel {
-  font-weight: 600;
-  padding: 0.5rem 0.75rem;
-  border-radius: 999px;
-  background: #f1f5f9;
-  color: #0f172a;
-  display: inline-flex;
-  align-items: center;
+.successMessage {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(45, 212, 191, 0.14);
+  color: #5eead4;
+  font-size: 0.85rem;
+  line-height: 1.55;
 }
 
-.statusLabel[data-status='signed-in'] {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.statusLabel[data-status='signed-out'] {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.profile {
+.accountsSection {
   display: flex;
+  flex-direction: column;
   gap: 1.25rem;
-  align-items: flex-start;
 }
 
-.avatar {
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.profileDetails {
-  display: grid;
-  gap: 0.75rem;
+.accountsTitle {
   margin: 0;
-}
-
-.profileDetails dt {
+  font-size: 1.05rem;
   font-weight: 600;
-  color: #475569;
+  color: rgba(224, 231, 255, 0.95);
 }
 
-.profileDetails dd {
-  margin: 0.25rem 0 0;
-  color: #0f172a;
-  word-break: break-all;
-}
-
-.emptyProfile {
+.accountsList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
   margin: 0;
-  color: #475569;
 }
 
-@media (max-width: 768px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
+.accountCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.6);
+}
 
-  .profile {
-    flex-direction: column;
-    align-items: center;
-  }
+.accountIdentity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
 
-  .profileDetails {
-    width: 100%;
-  }
+.accountName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(224, 231, 255, 0.95);
+}
+
+.accountEmail {
+  font-size: 0.85rem;
+  color: rgba(203, 213, 225, 0.9);
+}
+
+.accountTimestamp {
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.75);
+  white-space: nowrap;
 }
