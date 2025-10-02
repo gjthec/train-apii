@@ -13,7 +13,7 @@
 .sidebar {
   background: linear-gradient(135deg, #111827, #1f2937);
   color: #f9fafb;
-  padding: 2rem 1.5rem;
+  padding: 5.5rem 1.5rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -29,39 +29,37 @@
 
 .toggleButton {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.75rem;
-  color: #f9fafb;
+  background: #0f172a;
+  border: none;
+  border-radius: 50%;
+  color: #ffffff;
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 0.75rem;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  padding: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
   position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  width: 3rem;
-  height: 3rem;
-  z-index: 2;
+  top: 2rem;
+  left: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.35);
+  z-index: 3;
 }
 
 .toggleButton:hover,
 .toggleButton:focus {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.45);
 }
 
 .toggleButtonOpen {
-  box-shadow: 0 15px 30px rgba(17, 24, 39, 0.35);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.45);
 }
 
 .toggleButtonClosed {
-  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.25);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.35);
 }
 
 .srOnly {
@@ -79,8 +77,8 @@
   display: inline-flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 18px;
-  height: 12px;
+  width: 20px;
+  height: 14px;
 }
 
 .hamburgerIcon span {
@@ -89,19 +87,6 @@
   height: 2px;
   background-color: currentColor;
   border-radius: 999px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.toggleButtonOpen .hamburgerIcon span:nth-child(1) {
-  transform: translateY(5px) rotate(45deg);
-}
-
-.toggleButtonOpen .hamburgerIcon span:nth-child(2) {
-  opacity: 0;
-}
-
-.toggleButtonOpen .hamburgerIcon span:nth-child(3) {
-  transform: translateY(-5px) rotate(-45deg);
 }
 
 .sidebarCollapsed {
@@ -144,6 +129,11 @@
 .contentArea {
   padding: 3rem 4rem;
   background: #f5f7fb;
+}
+
+.contentAreaCollapsed {
+  padding-top: 5rem;
+  padding-left: 7rem;
 }
 
 .pageHeader {

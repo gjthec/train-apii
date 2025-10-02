@@ -72,7 +72,13 @@ export default function Layout({ title, description, children }: LayoutProps) {
           </ul>
         </nav>
       </aside>
-      <main className={styles.contentArea}>
+      <main
+        className={
+          isSidebarOpen
+            ? styles.contentArea
+            : `${styles.contentArea} ${styles.contentAreaCollapsed}`
+        }
+      >
         <header className={styles.pageHeader}>
           <h2>{title}</h2>
           {description ? <p>{description}</p> : null}
