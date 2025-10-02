@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import styles from '@/styles/Layout.module.css';
 
 interface LayoutProps {
@@ -22,11 +22,40 @@ const navLinks: Array<{ href: string; label: string }> = [
 ];
 
 export default function Layout({ title, description, children }: LayoutProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   return (
-    <div className={styles.appShell}>
-      <aside className={styles.sidebar}>
-        <h1 className={styles.brand}>Train API</h1>
-        <nav>
+    <div
+      className={
+        isSidebarOpen
+          ? styles.appShell
+          : `${styles.appShell} ${styles.appShellCollapsed}`
+      }
+    >
+      <aside
+        className={
+          isSidebarOpen
+            ? styles.sidebar
+            : `${styles.sidebar} ${styles.sidebarCollapsed}`
+        }
+      >
+        <button
+          type="button"
+          className={styles.toggleButton}
+          aria-expanded={isSidebarOpen}
+          aria-controls="sidebar-navigation"
+          onClick={() => setIsSidebarOpen((open) => !open)}
+        >
+          {isSidebarOpen ? 'Recolher menu' : 'Expandir menu'}
+        </button>
+        {isSidebarOpen ? (
+          <h1 className={styles.brand}>Train API</h1>
+        ) : (
+          <span className={styles.collapsedBrand} aria-hidden="true">
+            TA
+          </span>
+        )}
+        <nav id="sidebar-navigation" aria-hidden={!isSidebarOpen}>
           <ul>
             {navLinks.map((link) => (
               <li key={link.href}>
