@@ -6,9 +6,11 @@
 
 .empty {
   padding: 2rem;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 12px;
-  color: #9a3412;
+  background: var(--color-warning-soft);
+  border: 1px dashed rgba(245, 158, 11, 0.45);
+  border-radius: var(--radius-md);
+  color: rgba(146, 64, 14, 0.95);
   text-align: center;
+  font-weight: 600;
+  box-shadow: 0 28px 60px -45px rgba(245, 158, 11, 0.4);
 }
