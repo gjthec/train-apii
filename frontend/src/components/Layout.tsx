@@ -41,21 +41,28 @@ export default function Layout({ title, description, children }: LayoutProps) {
       >
         <button
           type="button"
-          className={styles.toggleButton}
+          className={`${styles.toggleButton} ${
+            isSidebarOpen ? styles.toggleButtonOpen : styles.toggleButtonClosed
+          }`}
           aria-expanded={isSidebarOpen}
           aria-controls="sidebar-navigation"
           onClick={() => setIsSidebarOpen((open) => !open)}
         >
-          {isSidebarOpen ? 'Recolher menu' : 'Expandir menu'}
-        </button>
-        {isSidebarOpen ? (
-          <h1 className={styles.brand}>Train API</h1>
-        ) : (
-          <span className={styles.collapsedBrand} aria-hidden="true">
-            TA
+          <span className={styles.srOnly}>
+            {isSidebarOpen ? 'Recolher menu' : 'Expandir menu'}
           </span>
-        )}
-        <nav id="sidebar-navigation" aria-hidden={!isSidebarOpen}>
+          <span className={styles.hamburgerIcon} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
+        {isSidebarOpen ? <h1 className={styles.brand}>Train API</h1> : null}
+        <nav
+          id="sidebar-navigation"
+          className={isSidebarOpen ? undefined : styles.navHidden}
+          aria-hidden={!isSidebarOpen}
+        >
           <ul>
             {navLinks.map((link) => (
               <li key={link.href}>

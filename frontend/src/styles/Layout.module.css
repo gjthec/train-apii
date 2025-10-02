@@ -3,10 +3,11 @@
   grid-template-columns: 260px 1fr;
   min-height: 100vh;
   transition: grid-template-columns 0.3s ease;
+  position: relative;
 }
 
 .appShellCollapsed {
-  grid-template-columns: 96px 1fr;
+  grid-template-columns: 0px 1fr;
 }
 
 .sidebar {
@@ -17,18 +18,13 @@
   flex-direction: column;
   gap: 2rem;
   transition: padding 0.3s ease;
+  position: relative;
+  overflow: visible;
 }
 
 .brand {
   font-size: 1.5rem;
   font-weight: 600;
-}
-
-.collapsedBrand {
-  display: none;
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
 }
 
 .toggleButton {
@@ -40,8 +36,18 @@
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem;
   transition: background 0.2s ease, border-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  width: 3rem;
+  height: 3rem;
+  z-index: 2;
 }
 
 .toggleButton:hover,
@@ -50,10 +56,59 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+.toggleButtonOpen {
+  box-shadow: 0 15px 30px rgba(17, 24, 39, 0.35);
+}
+
+.toggleButtonClosed {
+  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.25);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.hamburgerIcon {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 18px;
+  height: 12px;
+}
+
+.hamburgerIcon span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 999px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.toggleButtonOpen .hamburgerIcon span:nth-child(1) {
+  transform: translateY(5px) rotate(45deg);
+}
+
+.toggleButtonOpen .hamburgerIcon span:nth-child(2) {
+  opacity: 0;
+}
+
+.toggleButtonOpen .hamburgerIcon span:nth-child(3) {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
 .sidebarCollapsed {
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem 0.75rem;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0;
+  width: 0;
 }
 
 .sidebarCollapsed nav {
@@ -64,9 +119,6 @@
   display: none;
 }
 
-.sidebarCollapsed .collapsedBrand {
-  display: block;
-}
 
 .sidebar ul {
   list-style: none;
@@ -83,6 +135,10 @@
 .sidebar a:hover,
 .sidebar a:focus {
   color: #ffffff;
+}
+
+.navHidden {
+  display: none;
 }
 
 .contentArea {
