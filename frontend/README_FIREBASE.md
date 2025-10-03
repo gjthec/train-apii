@@ -5,7 +5,7 @@ This project uses the Firebase Web v9 modular SDK exclusively on the client side
 1. **Create a Firebase project** and register a Web App. Copy the client keys into a new `.env.local` file (see `.env.local.example`). All keys must be prefixed with `NEXT_PUBLIC_` so that the browser bundle can read them.
 2. **Enable authentication providers** in the Firebase Console under **Authentication → Sign-in method**:
    - **Anonymous** keeps backwards compatibility — the frontend still signs in automatically via `requireUid()` so existing pages load without manual login.
-   - **Google** powers the `/login` screen. It links the current session (anonymous or not) to a Google account, persists the profile under `users/{uid}` and reuses it on the next visits.
+   - **Google** powers the tela de login exibida antes do painel. Ela vincula a sessão atual (mesmo que anônima) a uma conta Google, persiste o perfil em `users/{uid}` e o reutiliza nos próximos acessos.
 3. **Add relaxed Firestore rules for development/testing only**:
 
    ```
@@ -29,7 +29,7 @@ This project uses the Firebase Web v9 modular SDK exclusively on the client side
    npm run dev
    ```
 
-   The first page load will automatically create (or reuse) an anonymous user and keep it in `localStorage`. Upgrade that session to a Google account em `/login` clicando em “Entrar com Google”. Firestore reads run through typed converters under `src/lib/api.ts` and profiles are synced to `users/{uid}`.
+   The first page load will automatically create (or reuse) an anonymous user and keep it in `localStorage`. Antes de liberar o painel, a aplicação exibe uma tela de login que oferece o botão “Entrar com Google” para converter a sessão em uma conta. Firestore reads run through typed converters under `src/lib/api.ts` and profiles are synced to `users/{uid}`.
 
 5. **Production build**:
 
