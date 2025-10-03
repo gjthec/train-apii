@@ -33,10 +33,13 @@ export interface AuthUser {
 
 export type AuthStatus = 'loading' | 'signed-in' | 'signed-out';
 
+type AuthProcessingAction = 'login' | 'register' | 'sign-out' | null;
+
 interface AuthContextValue {
   status: AuthStatus;
   user: AuthUser | null;
   isProcessing: boolean;
+  activeAction: AuthProcessingAction;
   error: Error | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -51,14 +54,16 @@ type LoginScreenProps = {
   user: AuthUser | null;
   error: AuthError;
   isProcessing: boolean;
+  activeAction: AuthProcessingAction;
   onGoogleLogin: () => Promise<void>;
+  onRegister: () => Promise<void>;
   onSignOut: () => Promise<void>;
 };
 
 const statusMessages: Record<AuthStatus, string> = {
   loading: 'Carregando sessão...',
   'signed-in': 'Sessão autenticada',
-  'signed-out': 'Nenhum usuário conectado'
+  'signed-out': 'Aguardando autenticação'
 };
 
 const toDisplayUserInfo = (profile: AuthenticatedUserProfile): AuthUser => ({
@@ -99,9 +104,21 @@ const getInitials = (info: AuthUser): string => {
   return 'U';
 };
 
-function LoginScreen({ status, user, error, isProcessing, onGoogleLogin, onSignOut }: LoginScreenProps) {
+function LoginScreen({
+  status,
+  user,
+  error,
+  isProcessing,
+  activeAction,
+  onGoogleLogin,
+  onRegister,
+  onSignOut
+}: LoginScreenProps) {
   const statusLabel = statusMessages[status];
   const showEmptyState = !user || user.isAnonymous;
+  const loginLabel = isProcessing && activeAction === 'login' ? 'Conectando...' : 'Entrar com Google';
+  const registerLabel = isProcessing && activeAction === 'register' ? 'Criando conta...' : 'Cadastrar conta';
+  const signOutLabel = isProcessing && activeAction === 'sign-out' ? 'Encerrando...' : 'Encerrar sessão';
 
   return (
     <div className={styles.backdrop}>
@@ -172,11 +189,11 @@ function LoginScreen({ status, user, error, isProcessing, onGoogleLogin, onSignO
                     d="M272 107.7c40.6 0 77 14 105.7 41.5l79.1-79.1C409.3 24.8 346.6 0 272 0 166.1 0 72.8 61.1 27.1 152.5l90.2 71.6C139.1 156.3 200 107.7 272 107.7"
                   />
                 </svg>
-                <span>{isProcessing ? 'Conectando...' : 'Entrar com Google'}</span>
+                <span>{loginLabel}</span>
               </button>
               {status === 'signed-in' ? (
                 <button type="button" className={styles.signOutButton} onClick={onSignOut} disabled={isProcessing}>
-                  Encerrar sessão
+                  {signOutLabel}
                 </button>
               ) : null}
             </div>
@@ -184,10 +201,14 @@ function LoginScreen({ status, user, error, isProcessing, onGoogleLogin, onSignO
             <div className={styles.sessionCard}>
               {showEmptyState ? (
                 <div className={styles.emptyState}>
-                  <h3>Nenhum usuário conectado</h3>
+                  <h3>Crie sua conta gratuita</h3>
                   <p>
-                    Clique em &ldquo;Entrar com Google&rdquo; para acessar o painel completo com dashboards e treinos sincronizados.
+                    Cadastre-se com sua conta Google para desbloquear dashboards avançados, salvar treinos e acompanhar sua
+                    evolução em qualquer dispositivo.
                   </p>
+                  <button type="button" className={styles.registerButton} onClick={onRegister} disabled={isProcessing}>
+                    {registerLabel}
+                  </button>
                 </div>
               ) : (
                 <>
@@ -260,6 +281,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState<AuthError>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [activeAction, setActiveAction] = useState<AuthProcessingAction>(null);
 
   useEffect(() => {
     let unsubscribe: Unsubscribe | undefined;
@@ -321,6 +343,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   const handleGoogleLogin = useCallback(async () => {
     setIsProcessing(true);
+    setActiveAction('login');
     setError(null);
     try {
       const profile = await signInWithGoogle();
@@ -331,11 +354,30 @@ export function AuthGate({ children }: { children: ReactNode }) {
       setError(new Error(message));
     } finally {
       setIsProcessing(false);
+      setActiveAction(null);
+    }
+  }, []);
+
+  const handleRegister = useCallback(async () => {
+    setIsProcessing(true);
+    setActiveAction('register');
+    setError(null);
+    try {
+      const profile = await signInWithGoogle();
+      setUser(toDisplayUserInfo(profile));
+      setStatus('signed-in');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Não foi possível criar a conta com o Google.';
+      setError(new Error(message));
+    } finally {
+      setIsProcessing(false);
+      setActiveAction(null);
     }
   }, []);
 
   const handleSignOut = useCallback(async () => {
     setIsProcessing(true);
+    setActiveAction('sign-out');
     setError(null);
     try {
       await signOutClient();
@@ -346,6 +388,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       setError(new Error(message));
     } finally {
       setIsProcessing(false);
+      setActiveAction(null);
     }
   }, []);
 
@@ -354,11 +397,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
       status,
       user: status === 'signed-in' ? user : null,
       isProcessing,
+      activeAction,
       error,
       signIn: handleGoogleLogin,
       signOut: handleSignOut
     }),
-    [error, handleGoogleLogin, handleSignOut, isProcessing, status, user]
+    [activeAction, error, handleGoogleLogin, handleSignOut, isProcessing, status, user]
   );
 
   if (status === 'signed-in' && user && !user.isAnonymous) {
@@ -372,7 +416,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
         user={user}
         error={error}
         isProcessing={isProcessing}
+        activeAction={activeAction}
         onGoogleLogin={handleGoogleLogin}
+        onRegister={handleRegister}
         onSignOut={handleSignOut}
       />
     </AuthContext.Provider>

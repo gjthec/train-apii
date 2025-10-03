@@ -271,6 +271,32 @@
   height: 20px;
 }
 
+.registerButton {
+  width: 100%;
+  padding: 0.85rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(99, 102, 241, 0.18);
+  color: #e0e7ff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
+  box-shadow: 0 20px 45px -35px rgba(99, 102, 241, 0.7);
+}
+
+.registerButton:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.28);
+  transform: translateY(-1px);
+  box-shadow: 0 28px 60px -35px rgba(99, 102, 241, 0.75);
+}
+
+.registerButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  box-shadow: none;
+}
+
 .signOutButton {
   width: 100%;
   padding: 0.8rem 1rem;
@@ -386,7 +412,7 @@
 
 .emptyState {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.9rem;
   text-align: left;
 }
 
