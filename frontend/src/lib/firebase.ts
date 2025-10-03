@@ -160,9 +160,11 @@ export async function signInWithGoogle(): Promise<AuthenticatedUserProfile> {
   const {
     browserLocalPersistence,
     GoogleAuthProvider,
+    getRedirectResult,
     linkWithPopup,
     setPersistence,
-    signInWithPopup
+    signInWithPopup,
+    signInWithRedirect
   } = await import('firebase/auth');
 
   await setPersistence(auth, browserLocalPersistence);
@@ -170,7 +172,20 @@ export async function signInWithGoogle(): Promise<AuthenticatedUserProfile> {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
 
-  let user: User | null = auth.currentUser ?? null;
+  let user: User | null = null;
+
+  try {
+    const redirectResult = await getRedirectResult(auth);
+    if (redirectResult?.user) {
+      user = redirectResult.user;
+    }
+  } catch (redirectError) {
+    console.warn('Failed to resolve Google redirect sign-in', redirectError);
+  }
+
+  if (!user) {
+    user = auth.currentUser ?? null;
+  }
 
   try {
     if (user && user.isAnonymous) {
@@ -192,6 +207,10 @@ export async function signInWithGoogle(): Promise<AuthenticatedUserProfile> {
     }
   } catch (error) {
     const authError = error as { code?: string; message?: string } | undefined;
+    if (authError?.code === 'auth/popup-blocked') {
+      await signInWithRedirect(auth, provider);
+      return new Promise<AuthenticatedUserProfile>(() => {});
+    }
     if (authError?.code === 'auth/popup-closed-by-user') {
       throw new Error('A janela de login foi fechada antes de concluir a autenticação.');
     }
