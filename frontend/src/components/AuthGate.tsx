@@ -16,6 +16,7 @@ import {
   requireUid,
   signInWithGoogle,
   signOutClient,
+  startGoogleSignInRedirect,
   type AuthenticatedUserProfile
 } from '@/lib/firebase';
 import styles from '@/styles/Login.module.css';
@@ -54,6 +55,7 @@ type LoginScreenProps = {
   user: AuthUser | null;
   error: AuthError;
   isProcessing: boolean;
+  isRedirecting: boolean;
   activeAction: AuthProcessingAction;
   onGoogleLogin: () => Promise<void>;
   onRegister: () => Promise<void>;
@@ -64,6 +66,14 @@ const statusMessages: Record<AuthStatus, string> = {
   loading: 'Carregando sessão...',
   'signed-in': 'Sessão autenticada',
   'signed-out': 'Aguardando autenticação'
+};
+
+const extractFirebaseErrorCode = (error: unknown): string | undefined => {
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    const { code } = error as { code?: string };
+    return code;
+  }
+  return undefined;
 };
 
 const toDisplayUserInfo = (profile: AuthenticatedUserProfile): AuthUser => ({
@@ -109,15 +119,25 @@ function LoginScreen({
   user,
   error,
   isProcessing,
+  isRedirecting,
   activeAction,
   onGoogleLogin,
   onRegister,
   onSignOut
 }: LoginScreenProps) {
-  const statusLabel = statusMessages[status];
+  const statusLabel = isRedirecting ? 'Redirecionando para concluir o login...' : statusMessages[status];
   const showEmptyState = !user || user.isAnonymous;
-  const loginLabel = isProcessing && activeAction === 'login' ? 'Conectando...' : 'Entrar com Google';
-  const registerLabel = isProcessing && activeAction === 'register' ? 'Criando conta...' : 'Cadastrar conta';
+  const disableActions = isProcessing || isRedirecting;
+  const isLoginActive = activeAction === 'login';
+  const isRegisterActive = activeAction === 'register';
+  const loginLabel =
+    isRedirecting && isLoginActive ? 'Redirecionando...' : isProcessing && isLoginActive ? 'Conectando...' : 'Entrar com Google';
+  const registerLabel =
+    isRedirecting && isRegisterActive
+      ? 'Redirecionando...'
+      : isProcessing && isRegisterActive
+        ? 'Criando conta...'
+        : 'Cadastrar conta';
   const signOutLabel = isProcessing && activeAction === 'sign-out' ? 'Encerrando...' : 'Encerrar sessão';
 
   return (
@@ -163,7 +183,7 @@ function LoginScreen({
             ) : null}
 
             <div className={styles.actions}>
-              <button type="button" className={styles.googleButton} onClick={onGoogleLogin} disabled={isProcessing}>
+              <button type="button" className={styles.googleButton} onClick={onGoogleLogin} disabled={disableActions}>
                 <svg
                   aria-hidden="true"
                   focusable="false"
@@ -206,7 +226,7 @@ function LoginScreen({
                     Cadastre-se com sua conta Google para desbloquear dashboards avançados, salvar treinos e acompanhar sua
                     evolução em qualquer dispositivo.
                   </p>
-                  <button type="button" className={styles.registerButton} onClick={onRegister} disabled={isProcessing}>
+                  <button type="button" className={styles.registerButton} onClick={onRegister} disabled={disableActions}>
                     {registerLabel}
                   </button>
                 </div>
@@ -282,6 +302,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [error, setError] = useState<AuthError>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeAction, setActiveAction] = useState<AuthProcessingAction>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     let unsubscribe: Unsubscribe | undefined;
@@ -341,39 +362,58 @@ export function AuthGate({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const handleGoogleLogin = useCallback(async () => {
-    setIsProcessing(true);
-    setActiveAction('login');
-    setError(null);
-    try {
-      const profile = await signInWithGoogle();
-      setUser(toDisplayUserInfo(profile));
-      setStatus('signed-in');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Não foi possível autenticar com o Google.';
-      setError(new Error(message));
-    } finally {
-      setIsProcessing(false);
-      setActiveAction(null);
-    }
-  }, []);
+  const runGoogleAuth = useCallback(
+    async (action: Extract<AuthProcessingAction, 'login' | 'register'>) => {
+      setIsProcessing(true);
+      setActiveAction(action);
+      setError(null);
 
-  const handleRegister = useCallback(async () => {
-    setIsProcessing(true);
-    setActiveAction('register');
-    setError(null);
-    try {
-      const profile = await signInWithGoogle();
-      setUser(toDisplayUserInfo(profile));
-      setStatus('signed-in');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Não foi possível criar a conta com o Google.';
-      setError(new Error(message));
-    } finally {
-      setIsProcessing(false);
-      setActiveAction(null);
-    }
-  }, []);
+      try {
+        const profile = await signInWithGoogle();
+        setUser(toDisplayUserInfo(profile));
+        setStatus('signed-in');
+        setIsProcessing(false);
+        setActiveAction(null);
+      } catch (err) {
+        const code = extractFirebaseErrorCode(err);
+        if (code === 'auth/popup-blocked') {
+          setStatus('loading');
+          setIsRedirecting(true);
+          try {
+            await startGoogleSignInRedirect();
+            setIsProcessing(false);
+          } catch (redirectError) {
+            const message =
+              redirectError instanceof Error
+                ? redirectError.message
+                : 'Não foi possível iniciar o redirecionamento de login.';
+            setError(new Error(message));
+            setStatus('signed-out');
+            setIsProcessing(false);
+            setActiveAction(null);
+            setIsRedirecting(false);
+          }
+          return;
+        }
+
+        const fallbackMessage =
+          err instanceof Error
+            ? err.message
+            : action === 'register'
+              ? 'Não foi possível criar a conta com o Google.'
+              : 'Não foi possível autenticar com o Google.';
+        setError(new Error(fallbackMessage));
+        setStatus('signed-out');
+        setIsProcessing(false);
+        setActiveAction(null);
+      }
+    },
+    []
+  );
+
+  const handleGoogleLogin = useCallback(() => runGoogleAuth('login'), [runGoogleAuth]);
+
+  const handleRegister = useCallback(() => runGoogleAuth('register'), [runGoogleAuth]);
 
   const handleSignOut = useCallback(async () => {
     setIsProcessing(true);
@@ -389,6 +429,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     } finally {
       setIsProcessing(false);
       setActiveAction(null);
+      setIsRedirecting(false);
     }
   }, []);
 
@@ -405,6 +446,12 @@ export function AuthGate({ children }: { children: ReactNode }) {
     [activeAction, error, handleGoogleLogin, handleSignOut, isProcessing, status, user]
   );
 
+  useEffect(() => {
+    if (status !== 'loading') {
+      setIsRedirecting(false);
+    }
+  }, [status]);
+
   if (status === 'signed-in' && user && !user.isAnonymous) {
     return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
   }
@@ -416,6 +463,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         user={user}
         error={error}
         isProcessing={isProcessing}
+        isRedirecting={isRedirecting}
         activeAction={activeAction}
         onGoogleLogin={handleGoogleLogin}
         onRegister={handleRegister}

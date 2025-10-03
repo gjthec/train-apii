@@ -151,6 +151,8 @@ export interface AuthenticatedUserProfile {
   isAnonymous: boolean;
 }
 
+type FirebaseAuthError = Error & { code?: string };
+
 export async function signInWithGoogle(): Promise<AuthenticatedUserProfile> {
   if (typeof window === 'undefined') {
     throw new Error('Google sign-in is only available in the browser.');
@@ -160,11 +162,9 @@ export async function signInWithGoogle(): Promise<AuthenticatedUserProfile> {
   const {
     browserLocalPersistence,
     GoogleAuthProvider,
-    getRedirectResult,
     linkWithPopup,
     setPersistence,
-    signInWithPopup,
-    signInWithRedirect
+    signInWithPopup
   } = await import('firebase/auth');
 
   await setPersistence(auth, browserLocalPersistence);
@@ -172,20 +172,7 @@ export async function signInWithGoogle(): Promise<AuthenticatedUserProfile> {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
 
-  let user: User | null = null;
-
-  try {
-    const redirectResult = await getRedirectResult(auth);
-    if (redirectResult?.user) {
-      user = redirectResult.user;
-    }
-  } catch (redirectError) {
-    console.warn('Failed to resolve Google redirect sign-in', redirectError);
-  }
-
-  if (!user) {
-    user = auth.currentUser ?? null;
-  }
+  let user: User | null = auth.currentUser ?? null;
 
   try {
     if (user && user.isAnonymous) {
@@ -208,16 +195,25 @@ export async function signInWithGoogle(): Promise<AuthenticatedUserProfile> {
   } catch (error) {
     const authError = error as { code?: string; message?: string } | undefined;
     if (authError?.code === 'auth/popup-blocked') {
-      await signInWithRedirect(auth, provider);
-      return new Promise<AuthenticatedUserProfile>(() => {});
+      const popupBlockedError = new Error('auth/popup-blocked') as FirebaseAuthError;
+      popupBlockedError.code = 'auth/popup-blocked';
+      throw popupBlockedError;
     }
     if (authError?.code === 'auth/popup-closed-by-user') {
-      throw new Error('A janela de login foi fechada antes de concluir a autenticação.');
+      const popupClosedError = new Error('A janela de login foi fechada antes de concluir a autenticação.') as FirebaseAuthError;
+      popupClosedError.code = authError.code;
+      throw popupClosedError;
     }
     if (authError?.code === 'auth/cancelled-popup-request') {
-      throw new Error('Existe uma solicitação de login em andamento. Tente novamente.');
+      const cancelledPopupError = new Error('Existe uma solicitação de login em andamento. Tente novamente.') as FirebaseAuthError;
+      cancelledPopupError.code = authError.code;
+      throw cancelledPopupError;
     }
-    throw error instanceof Error ? error : new Error('Não foi possível autenticar com o Google.');
+    const fallbackError = error instanceof Error ? error : new Error('Não foi possível autenticar com o Google.');
+    if (authError?.code && !(fallbackError as FirebaseAuthError).code) {
+      (fallbackError as FirebaseAuthError).code = authError.code;
+    }
+    throw fallbackError;
   }
 
   if (!user) {
@@ -245,4 +241,32 @@ export async function signOutClient(): Promise<void> {
   const { signOut } = await import('firebase/auth');
   await signOut(auth);
   lastSyncedProfileUid = null;
+}
+
+export async function startGoogleSignInRedirect(): Promise<void> {
+  if (typeof window === 'undefined') {
+    throw new Error('Google redirect sign-in is only available in the browser.');
+  }
+
+  const auth = await getClientAuth();
+  const {
+    browserLocalPersistence,
+    GoogleAuthProvider,
+    linkWithRedirect,
+    setPersistence,
+    signInWithRedirect
+  } = await import('firebase/auth');
+
+  await setPersistence(auth, browserLocalPersistence);
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  const activeUser = auth.currentUser;
+  if (activeUser && activeUser.isAnonymous) {
+    await linkWithRedirect(activeUser, provider);
+    return;
+  }
+
+  await signInWithRedirect(auth, provider);
 }

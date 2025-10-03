@@ -89,5 +89,6 @@ The Firebase helpers live in `src/lib/firebase.ts`:
 - `getClientAuth()` lazily loads `firebase/auth` only on the client.
 - `requireUid()` enforces anonymous authentication with `browserLocalPersistence` and persists user metadata in Firestore.
 - `signInWithGoogle()` upgrades or creates sessions and keeps the user profile up to date in `users/{uid}`.
+- `startGoogleSignInRedirect()` inicia o fluxo de redirecionamento como fallback quando o popup é bloqueado pelo navegador.
 
 Firestore queries in `src/lib/api.ts` use typed converters to provide minimal runtime validation and prevent `any` leakage into React components.
