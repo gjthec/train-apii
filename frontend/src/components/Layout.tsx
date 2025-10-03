@@ -36,48 +36,35 @@ export default function Layout({ title, description, children }: LayoutProps) {
   return (
     <div className={styles.appShell}>
       <aside className={styles.sidebar}>
-        <div className={styles.sidebarInner}>
-          <Link href="/" className={styles.brand} aria-label="Train API">
-            <span className={styles.brandIcon}>🏋️‍♂️</span>
-            <span className={styles.brandText}>Train API</span>
-          </Link>
-          <p className={styles.tagline}>Treinos inteligentes, progresso constante.</p>
-          <nav className={styles.nav} aria-label="Menu principal">
-            <ul>
-              {navLinks.map((link) => {
-                const active = isLinkActive(pathname, link.href);
+        <Link href="/" className={styles.brand} aria-label="Train API">
+          <span className={styles.brandTitle}>Train API</span>
+          <span className={styles.brandTagline}>Painel de treinos atualizado</span>
+        </Link>
+        <nav className={styles.nav} aria-label="Menu principal">
+          <ul>
+            {navLinks.map((link) => {
+              const active = isLinkActive(pathname, link.href);
 
-                return (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      aria-current={active ? 'page' : undefined}
-                      className={`${styles.navLink} ${active ? styles.navLinkActive : ''}`.trim()}
-                    >
-                      <span>{link.label}</span>
-                      <span className={styles.navIndicator} aria-hidden="true" />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </div>
-        <footer className={styles.sidebarFooter}>
-          <p>Atualizado diariamente com os dados mais recentes dos alunos.</p>
-        </footer>
+              return (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`${styles.navLink} ${active ? styles.navLinkActive : ''}`.trim()}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       </aside>
       <main className={styles.contentArea}>
-        <div className={styles.contentWrapper}>
+        <div className={styles.contentInner}>
           <header className={styles.pageHeader}>
-            <div>
-              <h2>{title}</h2>
-              {description ? <p>{description}</p> : null}
-            </div>
-            <div className={styles.pageAccent}>
-              <span className={styles.pageAccentGlow} aria-hidden="true" />
-              <span className={styles.pageAccentLabel}>Painel Train API</span>
-            </div>
+            <h2>{title}</h2>
+            {description ? <p>{description}</p> : null}
           </header>
           <section className={styles.pageBody}>{children}</section>
         </div>
