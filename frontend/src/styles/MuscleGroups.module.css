@@ -1,52 +1,55 @@
 .formSection {
-  margin-bottom: 2rem;
-  padding: 1.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 18px 45px -25px rgba(15, 23, 42, 0.3);
+  margin-bottom: 2.25rem;
+  padding: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--color-shadow-soft);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
+  backdrop-filter: blur(18px);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.35rem;
 }
 
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .fieldGroup label {
-  font-weight: 600;
-  color: #1f2937;
+  font-weight: 700;
+  color: var(--color-heading);
 }
 
 .fieldGroup input,
 .fieldGroup textarea {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.1rem;
   font-size: 1rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  font-family: inherit;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--color-heading);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .fieldGroup textarea {
   resize: vertical;
-  min-height: 120px;
+  min-height: 130px;
 }
 
 .fieldGroup input:focus,
 .fieldGroup textarea:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  border-color: var(--color-primary-strong);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
 
 .actions {
@@ -55,55 +58,67 @@
 }
 
 .actions button {
-  background: #2563eb;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
   color: #ffffff;
   border: none;
   border-radius: 999px;
-  padding: 0.75rem 1.75rem;
-  font-weight: 600;
+  padding: 0.85rem 2.2rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  box-shadow: 0 28px 55px -30px rgba(99, 102, 241, 0.65);
 }
 
 .actions button:disabled {
-  opacity: 0.7;
+  opacity: 0.65;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .actions button:not(:disabled):hover {
-  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 35px 65px -30px rgba(79, 70, 229, 0.65);
 }
 
 .actions button:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .success {
   margin: 0;
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border: 1px solid rgba(22, 163, 74, 0.35);
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
 }
 
 .error {
   margin: 0;
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
 }
 
 .card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  background: #f9fafb;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  background: var(--color-surface-strong);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  box-shadow: 0 28px 60px -45px rgba(15, 23, 42, 0.55);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 38px 75px -45px rgba(79, 70, 229, 0.45);
 }
 
 .cardHeader {
@@ -115,18 +130,18 @@
 
 .cardHeader h3 {
   margin: 0;
-  font-size: 1.1rem;
-  color: #111827;
+  font-size: 1.2rem;
+  color: var(--color-heading);
 }
 
 .cardHeader time {
-  color: #6b7280;
-  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
 }
 
 .cardDescription {
   margin: 0;
-  color: #374151;
+  color: var(--color-text-muted);
 }
 
 .cardActions {
@@ -135,31 +150,34 @@
 }
 
 .deleteButton {
-  border: 1px solid #fca5a5;
-  background: #fef2f2;
-  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.38);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.18));
+  color: var(--color-danger);
   border-radius: 999px;
-  padding: 0.5rem 1.25rem;
-  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: transform var(--transition-base), box-shadow var(--transition-base),
+    background-color var(--transition-base);
 }
 
 .deleteButton:not(:disabled):hover {
-  background: #fee2e2;
+  transform: translateY(-2px);
+  box-shadow: 0 25px 55px -35px rgba(239, 68, 68, 0.45);
 }
 
 .deleteButton:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .deleteButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 @media (max-width: 640px) {
   .formSection {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
 }

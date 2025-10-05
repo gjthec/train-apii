@@ -1,34 +1,37 @@
 .error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.32);
   padding: 1rem 1.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 25px 55px -40px rgba(239, 68, 68, 0.45);
 }
 
 .cardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
 .cardHeader h3 {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
+  color: var(--color-heading);
 }
 
 .cardHeader time {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .cardFooter {
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   display: flex;
-  gap: 1.5rem;
-  color: #4b5563;
+  gap: 1.75rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
 }
 
 .cardFooter span strong {
-  color: #111827;
+  color: var(--color-heading);
 }

@@ -1,13 +1,13 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .cardHeader {
@@ -19,7 +19,8 @@
 
 .cardHeader h3 {
   margin: 0 0 0.5rem;
-  font-size: 1.4rem;
+  font-size: 1.45rem;
+  color: var(--color-heading);
 }
 
 .metaList {
@@ -28,8 +29,8 @@
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  color: #4b5563;
+  gap: 0.85rem;
+  color: var(--color-text-muted);
   font-size: 0.95rem;
 }
 
@@ -37,35 +38,37 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.5rem;
-  color: #1f2937;
+  gap: 0.6rem;
+  color: var(--color-heading);
+  font-weight: 600;
 }
 
 .metrics span {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
 .notes {
   margin: 0;
-  padding: 1rem;
-  border-radius: 10px;
-  background: #ecfdf5;
-  color: #047857;
+  padding: 1.1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  font-weight: 600;
 }
 
 .cardActions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: 0.85rem;
   flex-wrap: wrap;
 }
 
 .sessionTabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .sessionTab {
@@ -73,28 +76,31 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.25rem;
-  padding: 0.65rem 1.1rem;
-  border-radius: 12px;
-  border: 1px solid #cbd5f5;
-  background: #f8fafc;
-  color: #1e293b;
-  font-weight: 600;
+  padding: 0.75rem 1.2rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-heading);
+  font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: transform var(--transition-base), box-shadow var(--transition-base),
+    border-color var(--transition-base);
 }
 
 .sessionTab:hover,
 .sessionTab:focus-visible {
-  background: #e0f2fe;
+  background: rgba(224, 231, 255, 0.75);
   outline: none;
+  transform: translateY(-2px);
+  box-shadow: 0 20px 45px -32px rgba(99, 102, 241, 0.4);
 }
 
 .activeSessionTab {
-  background: #1d4ed8;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
   color: #ffffff;
-  border-color: #1d4ed8;
-  box-shadow: 0 12px 30px rgba(29, 78, 216, 0.22);
+  border-color: transparent;
+  box-shadow: 0 28px 55px -35px rgba(79, 70, 229, 0.6);
 }
 
 .sessionTabLabel {
@@ -110,85 +116,85 @@
 .sessionSummary {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .sessionInfo {
-  color: #1f2937;
-  font-weight: 600;
+  color: var(--color-heading);
+  font-weight: 700;
 }
 
 .emptyMessage {
-  padding: 1.25rem;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 12px;
-  color: #9a3412;
+  padding: 1.35rem;
+  background: var(--color-warning-soft);
+  border: 1px dashed rgba(245, 158, 11, 0.45);
+  border-radius: var(--radius-sm);
+  color: rgba(146, 64, 14, 0.95);
+  font-weight: 600;
 }
 
 .duplicateButton {
-  border: 1px solid #2563eb;
-  background: #eff6ff;
+  border: 1px solid rgba(37, 99, 235, 0.5);
+  background: rgba(37, 99, 235, 0.12);
   color: #1d4ed8;
   border-radius: 999px;
-  padding: 0.5rem 1.25rem;
-  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .duplicateButton:not(:disabled):hover {
-  background: #dbeafe;
+  transform: translateY(-1px);
+  box-shadow: 0 22px 45px -30px rgba(37, 99, 235, 0.45);
 }
 
 .duplicateButton:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .duplicateButton:disabled,
 .deleteButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.duplicateButton:disabled:active,
-.deleteButton:disabled:active {
-  transform: none;
+  box-shadow: none;
 }
 
 .deleteButton {
-  border: 1px solid #dc2626;
-  background: #fef2f2;
-  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
   border-radius: 999px;
-  padding: 0.5rem 1.25rem;
-  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .deleteButton:not(:disabled):hover {
-  background: #fee2e2;
+  transform: translateY(-1px);
+  box-shadow: 0 22px 45px -32px rgba(239, 68, 68, 0.4);
 }
 
 .deleteButton:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .exerciseGrid {
   display: grid;
-  gap: 1.25rem;
+  gap: 1.35rem;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .exerciseCard {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.25rem;
-  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.35rem;
+  background: var(--color-surface-strong);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-shadow: 0 28px 55px -45px rgba(15, 23, 42, 0.5);
 }
 
 .exerciseHeader {
@@ -196,91 +202,4 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-}
-
-.exerciseHeader h4 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.exerciseHeader span {
-  color: #4b5563;
-  font-size: 0.9rem;
-}
-
-.seriesCount {
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.exerciseNotes {
-  margin: 0;
-  color: #374151;
-  font-size: 0.95rem;
-}
-
-.setList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.setItem {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.5rem;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-}
-
-.setOrder {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.setMetric {
-  color: #2563eb;
-  font-weight: 600;
-}
-
-@media (max-width: 640px) {
-  .metrics {
-    align-items: flex-start;
-  }
-
-  .metrics span {
-    font-size: 0.95rem;
-  }
-
-  .cardHeader {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .exerciseHeader {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .cardActions {
-    justify-content: flex-start;
-  }
-
-  .sessionTabs {
-    gap: 0.5rem;
-  }
-
-  .sessionTab {
-    width: 100%;
-  }
 }
