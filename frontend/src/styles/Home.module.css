@@ -1,31 +1,108 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .card {
-  background: #ffffff;
-  padding: 1.75rem;
-  border-radius: 12px;
-  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.25rem;
+  padding: clamp(2rem, 4vw, 2.75rem);
+  border-radius: 32px;
+  border: 1px solid var(--color-border);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(224, 242, 254, 0.65));
+  box-shadow: var(--shadow-elevated);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: -35% auto auto -25%;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.25), transparent 60%);
+  opacity: 0.7;
+  z-index: -1;
+  transition: transform 0.4s ease;
 }
 
 .card h3 {
-  font-size: 1.3rem;
-  color: #111827;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
 }
 
 .card p {
-  color: #4b5563;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cardIcon {
+  font-size: 2rem;
+  filter: drop-shadow(0 10px 20px rgba(37, 99, 235, 0.35));
+}
+
+.cardCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: auto;
+  font-weight: 600;
+  color: var(--color-primary);
+  letter-spacing: 0.01em;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.cardCtaIcon {
+  width: 1.2rem;
+  height: 1.2rem;
+  transition: transform 0.3s ease;
 }
 
 .card:hover,
 .card:focus {
-  transform: translateY(-4px);
-  box-shadow: 0 25px 50px rgba(30, 41, 59, 0.12);
+  transform: translateY(-8px);
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.18);
+}
+
+.card:hover::before,
+.card:focus::before {
+  transform: translate(25px, -15px) scale(1.05);
+}
+
+.card:hover .cardCta,
+.card:focus .cardCta {
+  color: #1d4ed8;
+  transform: translateX(6px);
+}
+
+.card:hover .cardCtaIcon,
+.card:focus .cardCtaIcon {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card::before,
+  .cardCta,
+  .cardCtaIcon {
+    transition: none;
+  }
+
+  .card:hover,
+  .card:focus {
+    transform: none;
+    box-shadow: var(--shadow-elevated);
+  }
 }
