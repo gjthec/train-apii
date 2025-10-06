@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import styles from '@/styles/Layout.module.css';
 
 interface LayoutProps {
@@ -18,15 +18,51 @@ const navLinks: Array<{ href: string; label: string }> = [
   { href: '/muscle-groups', label: 'Grupos musculares' },
   { href: '/exercises', label: 'Exercícios' },
   { href: '/sessions', label: 'Sessões' },
-  { href: '/login', label: 'Login' }
+  { href: '/logout', label: 'Logout' }
 ];
 
 export default function Layout({ title, description, children }: LayoutProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   return (
-    <div className={styles.appShell}>
-      <aside className={styles.sidebar}>
-        <h1 className={styles.brand}>Train API</h1>
-        <nav>
+    <div
+      className={
+        isSidebarOpen
+          ? styles.appShell
+          : `${styles.appShell} ${styles.appShellCollapsed}`
+      }
+    >
+      <aside
+        className={
+          isSidebarOpen
+            ? styles.sidebar
+            : `${styles.sidebar} ${styles.sidebarCollapsed}`
+        }
+      >
+        <button
+          type="button"
+          className={`${styles.toggleButton} ${
+            isSidebarOpen ? styles.toggleButtonOpen : styles.toggleButtonClosed
+          }`}
+          aria-expanded={isSidebarOpen}
+          aria-controls="sidebar-navigation"
+          onClick={() => setIsSidebarOpen((open) => !open)}
+        >
+          <span className={styles.srOnly}>
+            {isSidebarOpen ? 'Recolher menu' : 'Expandir menu'}
+          </span>
+          <span className={styles.hamburgerIcon} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
+        {isSidebarOpen ? <h1 className={styles.brand}>Train API</h1> : null}
+        <nav
+          id="sidebar-navigation"
+          className={isSidebarOpen ? undefined : styles.navHidden}
+          aria-hidden={!isSidebarOpen}
+        >
           <ul>
             {navLinks.map((link) => (
               <li key={link.href}>
@@ -36,7 +72,13 @@ export default function Layout({ title, description, children }: LayoutProps) {
           </ul>
         </nav>
       </aside>
-      <main className={styles.contentArea}>
+      <main
+        className={
+          isSidebarOpen
+            ? styles.contentArea
+            : `${styles.contentArea} ${styles.contentAreaCollapsed}`
+        }
+      >
         <header className={styles.pageHeader}>
           <h2>{title}</h2>
           {description ? <p>{description}</p> : null}

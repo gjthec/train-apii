@@ -2,21 +2,108 @@
   display: grid;
   grid-template-columns: 260px 1fr;
   min-height: 100vh;
+  transition: grid-template-columns 0.3s ease;
+  position: relative;
+}
+
+.appShellCollapsed {
+  grid-template-columns: 0px 1fr;
 }
 
 .sidebar {
   background: linear-gradient(135deg, #111827, #1f2937);
   color: #f9fafb;
-  padding: 2rem 1.5rem;
+  padding: 5.5rem 1.5rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  transition: padding 0.3s ease;
+  position: relative;
+  overflow: visible;
 }
 
 .brand {
   font-size: 1.5rem;
   font-weight: 600;
 }
+
+.toggleButton {
+  align-self: flex-start;
+  background: #0f172a;
+  border: none;
+  border-radius: 50%;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.35);
+  z-index: 3;
+}
+
+.toggleButton:hover,
+.toggleButton:focus {
+  transform: scale(1.05);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.45);
+}
+
+.toggleButtonOpen {
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.45);
+}
+
+.toggleButtonClosed {
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.35);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.hamburgerIcon {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 20px;
+  height: 14px;
+}
+
+.hamburgerIcon span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 999px;
+}
+
+.sidebarCollapsed {
+  align-items: flex-start;
+  gap: 0;
+  padding: 0;
+  width: 0;
+}
+
+.sidebarCollapsed nav {
+  display: none;
+}
+
+.sidebarCollapsed .brand {
+  display: none;
+}
+
 
 .sidebar ul {
   list-style: none;
@@ -35,9 +122,18 @@
   color: #ffffff;
 }
 
+.navHidden {
+  display: none;
+}
+
 .contentArea {
   padding: 3rem 4rem;
   background: #f5f7fb;
+}
+
+.contentAreaCollapsed {
+  padding-top: 5rem;
+  padding-left: 7rem;
 }
 
 .pageHeader {

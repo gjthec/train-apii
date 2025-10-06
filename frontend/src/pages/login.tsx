@@ -1,47 +1,23 @@
 'use client';
 
-import Image from 'next/image';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
-import Layout from '@/components/Layout';
-import {
-  getClientAuth,
-  requireUid,
-  signInWithGoogle,
-  signOutClient,
-  type AuthenticatedUserProfile
-} from '@/lib/firebase';
+import { getClientAuth, requireUid, signInWithGoogle } from '@/lib/firebase';
 import styles from '@/styles/Login.module.css';
 
 import type { Unsubscribe } from 'firebase/auth';
-
-interface DisplayUserInfo {
-  uid: string;
-  displayName?: string;
-  email?: string;
-  photoURL?: string;
-  isAnonymous: boolean;
-  providerIds: readonly string[];
-}
 
 type AuthStatus = 'loading' | 'signed-in' | 'signed-out';
 
 type AuthError = Error | null;
 
-const toDisplayUserInfo = (profile: AuthenticatedUserProfile): DisplayUserInfo => ({
-  uid: profile.uid,
-  displayName: profile.displayName ?? undefined,
-  email: profile.email ?? undefined,
-  photoURL: profile.photoURL ?? undefined,
-  isAnonymous: profile.isAnonymous,
-  providerIds: profile.providerIds
-});
-
 export default function LoginPage() {
   const [status, setStatus] = useState<AuthStatus>('loading');
-  const [userInfo, setUserInfo] = useState<DisplayUserInfo | null>(null);
   const [error, setError] = useState<AuthError>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasRedirected, setHasRedirected] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     let unsubscribe: Unsubscribe | undefined;
@@ -58,24 +34,12 @@ export default function LoginPage() {
           }
 
           if (user) {
-            const profile: AuthenticatedUserProfile = {
-              uid: user.uid,
-              displayName: user.displayName,
-              email: user.email,
-              photoURL: user.photoURL,
-              providerIds: user.providerData
-                .map((info) => info?.providerId)
-                .filter((providerId): providerId is string => Boolean(providerId)),
-              isAnonymous: user.isAnonymous
-            };
-            setUserInfo(toDisplayUserInfo(profile));
             setStatus('signed-in');
             setError(null);
             void requireUid().catch(() => {
               // ignore errors because we already have a user session
             });
           } else {
-            setUserInfo(null);
             setStatus('signed-out');
           }
         });
@@ -101,8 +65,7 @@ export default function LoginPage() {
     setIsProcessing(true);
     setError(null);
     try {
-      const profile = await signInWithGoogle();
-      setUserInfo(toDisplayUserInfo(profile));
+      await signInWithGoogle();
       setStatus('signed-in');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível autenticar com o Google.';
@@ -112,32 +75,26 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleSignOut = useCallback(async () => {
-    setIsProcessing(true);
-    setError(null);
-    try {
-      await signOutClient();
-      setUserInfo(null);
-      setStatus('signed-out');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Não foi possível encerrar a sessão.';
-      setError(new Error(message));
-    } finally {
-      setIsProcessing(false);
+  useEffect(() => {
+    if (status === 'signed-in' && !hasRedirected) {
+      setHasRedirected(true);
+      void router.replace('/');
     }
-  }, []);
+  }, [status, hasRedirected, router]);
+
+  const statusMessage = status === 'loading' ? 'Verificando sessão...' : status === 'signed-in' ? 'Redirecionando...' : null;
 
   return (
-    <Layout title="Autenticação" description="Conecte-se com sua conta Google para sincronizar seus dados.">
+    <>
       <Head>
         <title>Train API - Login</title>
       </Head>
-      <div className={styles.container}>
-        <section className={styles.card}>
-          <h3>Entrar com Google</h3>
-          <p>
-            Você pode continuar utilizando a autenticação anônima automática ou conectar sua conta Google para sincronizar seus
-            treinos com um usuário permanente.
+      <div className={styles.pageBackground}>
+        <div className={styles.panel}>
+          <span className={styles.brandChip}>Train API</span>
+          <h1>Acesse sua conta</h1>
+          <p className={styles.subtitle}>
+            Entre com o Google para sincronizar treinos e continuar de onde parou.
           </p>
           <button
             type="button"
@@ -172,65 +129,18 @@ export default function LoginPage() {
             </svg>
             <span>{isProcessing ? 'Processando...' : 'Entrar com Google'}</span>
           </button>
-          <button type="button" className={styles.signOutButton} onClick={handleSignOut} disabled={isProcessing}>
-            Sair da conta
-          </button>
+          <a
+            className={styles.secondaryLink}
+            href="https://accounts.google.com/signup"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Cadastrar nova conta
+          </a>
           {error ? <p className={styles.errorMessage}>{error.message}</p> : null}
-        </section>
-
-        <section className={styles.card}>
-          <h3>Status da sessão</h3>
-          <p className={styles.statusLabel} data-status={status}>
-            {status === 'loading' && 'Carregando sessão...'}
-            {status === 'signed-in' && 'Sessão autenticada'}
-            {status === 'signed-out' && 'Nenhum usuário conectado'}
-          </p>
-
-          {userInfo ? (
-            <div className={styles.profile}>
-              {userInfo.photoURL ? (
-                <Image
-                  src={userInfo.photoURL}
-                  alt={userInfo.displayName ?? 'Foto do usuário'}
-                  width={64}
-                  height={64}
-                  className={styles.avatar}
-                />
-              ) : null}
-              <dl className={styles.profileDetails}>
-                <div>
-                  <dt>UID</dt>
-                  <dd>{userInfo.uid}</dd>
-                </div>
-                {userInfo.displayName ? (
-                  <div>
-                    <dt>Nome</dt>
-                    <dd>{userInfo.displayName}</dd>
-                  </div>
-                ) : null}
-                {userInfo.email ? (
-                  <div>
-                    <dt>Email</dt>
-                    <dd>{userInfo.email}</dd>
-                  </div>
-                ) : null}
-                <div>
-                  <dt>Tipo de conta</dt>
-                  <dd>{userInfo.isAnonymous ? 'Anônima' : 'Google'}</dd>
-                </div>
-                {userInfo.providerIds.length > 0 ? (
-                  <div>
-                    <dt>Provedores</dt>
-                    <dd>{userInfo.providerIds.join(', ')}</dd>
-                  </div>
-                ) : null}
-              </dl>
-            </div>
-          ) : (
-            <p className={styles.emptyProfile}>Nenhuma informação de usuário disponível.</p>
-          )}
-        </section>
+          {statusMessage ? <p className={styles.statusMessage}>{statusMessage}</p> : null}
+        </div>
       </div>
-    </Layout>
+    </>
   );
 }
