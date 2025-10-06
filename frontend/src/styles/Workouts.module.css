@@ -1,25 +1,26 @@
 .modeSection {
   margin-bottom: 2rem;
-  padding: 1.5rem 1.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #f8fafc;
+  padding: 1.85rem 2rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.35rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .modeHeader h3 {
   margin: 0 0 0.5rem;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .modeDescription {
   margin: 0;
-  color: #475569;
-  line-height: 1.5;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 .modeToggle {
@@ -30,46 +31,47 @@
 
 .modeButton {
   flex: 1 1 240px;
-  padding: 0.85rem 1.25rem;
-  border-radius: 12px;
-  border: 1px solid #cbd5f5;
-  background: #ffffff;
-  color: #1e293b;
+  padding: 0.95rem 1.35rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  background: var(--surface-card-strong);
+  color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-  box-shadow: 0 10px 25px -20px rgba(15, 23, 42, 0.35);
+  transition: border-color 0.25s ease, box-shadow 0.3s ease, transform 0.25s ease;
+  box-shadow: var(--shadow-xs);
 }
 
 .modeButton:hover {
-  border-color: #818cf8;
-  box-shadow: 0 18px 35px -20px rgba(79, 70, 229, 0.35);
-  transform: translateY(-1px);
+  border-color: var(--accent-400);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
 }
 
 .modeButtonActive {
-  border-color: #4f46e5;
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(79, 70, 229, 0.05));
-  color: #312e81;
+  border-color: var(--accent-600);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(59, 130, 246, 0.08));
+  color: var(--accent-700);
+  box-shadow: 0 20px 40px -24px rgba(99, 102, 241, 0.45);
 }
 
 .formSection {
   margin-bottom: 2rem;
-  padding: 1.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 18px 45px -25px rgba(15, 23, 42, 0.3);
+  padding: 2rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .historySection,
 .historyPreview {
   margin-top: 2rem;
-  padding: 1.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 18px 45px -25px rgba(15, 23, 42, 0.2);
+  padding: 2rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
 }
 
 .historyHeader {
@@ -80,12 +82,12 @@
   margin: 0 0 0.5rem;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .historyHeader p {
   margin: 0;
-  color: #475569;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -98,7 +100,7 @@
 
 .selectLabel {
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .selectRow {
@@ -111,36 +113,37 @@
 .selectControl {
   flex: 1 1 260px;
   min-width: 220px;
-  padding: 0.75rem 1rem;
-  border: 1px solid #cbd5f5;
-  border-radius: 12px;
-  background: #f8fafc;
-  color: #1f2937;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-primary);
   font-size: 0.95rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
 .selectControl:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: var(--accent-500);
+  background: var(--surface-card-strong);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
 }
 
 .selectAction {
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--radius-md);
   border: none;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  color: var(--text-contrast);
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 12px 25px -18px rgba(79, 70, 229, 0.7);
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+  box-shadow: 0 16px 32px -20px rgba(79, 70, 229, 0.65);
 }
 
 .selectAction:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 30px -18px rgba(79, 70, 229, 0.75);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -18px rgba(79, 70, 229, 0.7);
 }
 
 .selectAction:disabled {
@@ -151,25 +154,27 @@
 
 .success {
   margin-top: 1rem;
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
+  background: var(--feedback-success-bg);
+  color: var(--feedback-success-text);
+  border: 1px solid var(--feedback-success-border);
   padding: 1rem 1.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 .error {
   margin-top: 1rem;
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: var(--feedback-error-bg);
+  color: var(--feedback-error-text);
+  border: 1px solid var(--feedback-error-border);
   padding: 1rem 1.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 @media (max-width: 640px) {
   .modeSection {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
 
   .modeToggle {
@@ -177,12 +182,12 @@
   }
 
   .formSection {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
 
   .historySection,
   .historyPreview {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
 
   .selectRow {

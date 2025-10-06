@@ -8,6 +8,11 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-xs);
 }
 
 .cardHeader {
@@ -20,6 +25,7 @@
 .cardHeader h3 {
   margin: 0 0 0.5rem;
   font-size: 1.4rem;
+  color: var(--text-primary);
 }
 
 .metaList {
@@ -29,7 +35,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  color: #4b5563;
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
@@ -38,7 +44,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 0.5rem;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .metrics span {
@@ -50,9 +56,10 @@
 .notes {
   margin: 0;
   padding: 1rem;
-  border-radius: 10px;
-  background: #ecfdf5;
-  color: #047857;
+  border-radius: var(--radius-sm);
+  background: var(--feedback-success-bg);
+  color: var(--feedback-success-text);
+  border: 1px solid var(--feedback-success-border);
 }
 
 .cardActions {
@@ -74,27 +81,29 @@
   align-items: flex-start;
   gap: 0.25rem;
   padding: 0.65rem 1.1rem;
-  border-radius: 12px;
-  border: 1px solid #cbd5f5;
-  background: #f8fafc;
-  color: #1e293b;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  background: var(--surface-muted);
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  box-shadow: 0 12px 30px -20px rgba(15, 23, 42, 0.35);
 }
 
 .sessionTab:hover,
 .sessionTab:focus-visible {
-  background: #e0f2fe;
+  background: rgba(99, 102, 241, 0.12);
   outline: none;
+  transform: translateY(-1px);
 }
 
 .activeSessionTab {
-  background: #1d4ed8;
-  color: #ffffff;
-  border-color: #1d4ed8;
-  box-shadow: 0 12px 30px rgba(29, 78, 216, 0.22);
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  color: var(--text-contrast);
+  border-color: transparent;
+  box-shadow: 0 18px 40px -24px rgba(79, 70, 229, 0.55);
 }
 
 .sessionTabLabel {
@@ -114,35 +123,39 @@
 }
 
 .sessionInfo {
-  color: #1f2937;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
 .emptyMessage {
   padding: 1.25rem;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 12px;
-  color: #9a3412;
+  background: var(--feedback-warning-bg);
+  border: 1px solid var(--feedback-warning-border);
+  border-radius: var(--radius-md);
+  color: var(--feedback-warning-text);
+  box-shadow: var(--shadow-xs);
 }
 
 .duplicateButton {
-  border: 1px solid #2563eb;
-  background: #eff6ff;
-  color: #1d4ed8;
-  border-radius: 999px;
-  padding: 0.5rem 1.25rem;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-700);
+  border-radius: var(--radius-pill);
+  padding: 0.55rem 1.35rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 24px -18px rgba(99, 102, 241, 0.35);
 }
 
 .duplicateButton:not(:disabled):hover {
-  background: #dbeafe;
+  background: rgba(99, 102, 241, 0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 18px 32px -18px rgba(99, 102, 241, 0.4);
 }
 
 .duplicateButton:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .duplicateButton:disabled,
@@ -157,22 +170,25 @@
 }
 
 .deleteButton {
-  border: 1px solid #dc2626;
-  background: #fef2f2;
+  border: 1px solid rgba(248, 113, 113, 0.6);
+  background: rgba(254, 226, 226, 0.4);
   color: #b91c1c;
-  border-radius: 999px;
-  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-pill);
+  padding: 0.55rem 1.35rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 24px -18px rgba(248, 113, 113, 0.45);
 }
 
 .deleteButton:not(:disabled):hover {
-  background: #fee2e2;
+  background: rgba(254, 202, 202, 0.55);
+  transform: translateY(-1px);
+  box-shadow: 0 18px 30px -18px rgba(248, 113, 113, 0.5);
 }
 
 .deleteButton:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .exerciseGrid {
@@ -182,13 +198,14 @@
 }
 
 .exerciseCard {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.25rem;
-  background: #f8fafc;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  background: var(--surface-muted);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .exerciseHeader {
@@ -201,26 +218,28 @@
 .exerciseHeader h4 {
   margin: 0;
   font-size: 1.1rem;
+  color: var(--text-primary);
 }
 
 .exerciseHeader span {
-  color: #4b5563;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .seriesCount {
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.18);
+  color: var(--accent-700);
+  padding: 0.25rem 0.8rem;
+  border-radius: var(--radius-pill);
   font-weight: 600;
   font-size: 0.85rem;
 }
 
 .exerciseNotes {
   margin: 0;
-  color: #374151;
+  color: var(--text-secondary);
   font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .setList {
@@ -237,19 +256,20 @@
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 0.5rem;
   align-items: center;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-card-strong);
+  border: 1px solid var(--border-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .setOrder {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .setMetric {
-  color: #2563eb;
+  color: var(--accent-600);
   font-weight: 600;
 }
 

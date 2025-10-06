@@ -41,10 +41,11 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
-  border-radius: 12px;
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
-  color: #92400e;
+  border-radius: var(--radius-md);
+  background: var(--feedback-warning-bg);
+  border: 1px solid var(--feedback-warning-border);
+  color: var(--feedback-warning-text);
+  box-shadow: var(--shadow-xs);
 }
 
 .prefillBanner strong {
@@ -61,19 +62,21 @@
 
 .clearPrefillButton {
   align-self: flex-start;
-  background: #ffffff;
-  border: 1px solid #f59e0b;
-  color: #b45309;
-  border-radius: 999px;
+  background: rgba(254, 243, 199, 0.5);
+  border: 1px solid rgba(251, 191, 36, 0.6);
+  color: var(--feedback-warning-text);
+  border-radius: var(--radius-pill);
   padding: 0.45rem 1.25rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 10px 22px -16px rgba(251, 191, 36, 0.5);
 }
 
 .clearPrefillButton:hover {
-  background: #fef08a;
-  color: #92400e;
+  background: rgba(253, 224, 71, 0.4);
+  color: #854d0e;
+  transform: translateY(-1px);
 }
 
 @media (min-width: 640px) {
@@ -98,25 +101,25 @@
 
 .fieldGroup label {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .fieldGroup input,
 .fieldGroup select {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 1rem;
   font-size: 1rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  background-color: #ffffff;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  background-color: var(--surface-card-strong);
   font-family: inherit;
 }
 
 .fieldGroup input:focus,
 .fieldGroup select:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  border-color: var(--accent-500);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
 }
 
 .fieldGroup select:disabled {
@@ -132,10 +135,11 @@
 }
 
 .exerciseCard {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  background: #f9fafb;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -144,7 +148,7 @@
 .exerciseLegend {
   font-weight: 700;
   font-size: 1rem;
-  color: #111827;
+  color: var(--text-primary);
   padding: 0 0.25rem;
 }
 
@@ -188,14 +192,14 @@
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  border: 1px dashed #c7d2fe;
-  border-radius: 10px;
-  background: #eef2ff;
+  border: 1px dashed rgba(129, 140, 248, 0.45);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
 }
 
 .setLabel {
   font-weight: 600;
-  color: #3730a3;
+  color: var(--accent-600);
 }
 
 .setActions {
@@ -212,105 +216,117 @@
 
 .primaryButton {
   align-self: flex-end;
-  background: #2563eb;
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  color: var(--text-contrast);
   border: none;
-  border-radius: 999px;
-  padding: 0.75rem 1.75rem;
+  border-radius: var(--radius-pill);
+  padding: 0.85rem 1.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  box-shadow: 0 20px 40px -22px rgba(79, 70, 229, 0.6);
 }
 
 .primaryButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .primaryButton:not(:disabled):hover {
-  background: #1d4ed8;
+  transform: translateY(-2px);
 }
 
 .primaryButton:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .secondaryButton {
-  background: #e0e7ff;
-  color: #312e81;
-  border: none;
-  border-radius: 999px;
-  padding: 0.65rem 1.5rem;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-700);
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  border-radius: var(--radius-pill);
+  padding: 0.7rem 1.6rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 24px -18px rgba(99, 102, 241, 0.35);
 }
 
 .secondaryButton:hover {
-  background: #c7d2fe;
+  background: rgba(99, 102, 241, 0.18);
+  transform: translateY(-1px);
 }
 
 .saveExerciseButton {
-  background: #ecfccb;
-  color: #3f6212;
-  border: 1px solid #bbf7d0;
-  border-radius: 999px;
-  padding: 0.55rem 1.5rem;
+  background: rgba(220, 252, 231, 0.7);
+  color: var(--feedback-success-text);
+  border: 1px solid var(--feedback-success-border);
+  border-radius: var(--radius-pill);
+  padding: 0.6rem 1.6rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 12px 22px -16px rgba(74, 222, 128, 0.35);
 }
 
 .saveExerciseButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .saveExerciseButton:not(:disabled):hover {
-  background: #d9f99d;
-  border-color: #bef264;
+  background: rgba(187, 247, 208, 0.65);
+  transform: translateY(-1px);
 }
 
 .editorLinkButton {
-  background: #eef2ff;
-  color: #312e81;
-  border: 1px solid #c7d2fe;
-  border-radius: 999px;
-  padding: 0.5rem 1.25rem;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-700);
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  border-radius: var(--radius-pill);
+  padding: 0.55rem 1.35rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 24px -18px rgba(99, 102, 241, 0.35);
 }
 
 .editorLinkButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .editorLinkButton:not(:disabled):hover {
-  background: #c7d2fe;
-  border-color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px -20px rgba(99, 102, 241, 0.4);
 }
 
 .dangerButton {
-  background: #fef2f2;
+  background: rgba(254, 226, 226, 0.4);
   color: #b91c1c;
-  border: 1px solid #fecaca;
-  border-radius: 999px;
-  padding: 0.5rem 1.2rem;
+  border: 1px solid rgba(248, 113, 113, 0.6);
+  border-radius: var(--radius-pill);
+  padding: 0.55rem 1.3rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 22px -16px rgba(248, 113, 113, 0.45);
 }
 
 .dangerButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .dangerButton:not(:disabled):hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
+  background: rgba(254, 202, 202, 0.55);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px -18px rgba(248, 113, 113, 0.5);
 }
 
 .removeButton {
@@ -320,8 +336,8 @@
   font-weight: 600;
   cursor: pointer;
   padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  transition: background 0.2s ease;
+  border-radius: 8px;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .removeButton:disabled {
@@ -331,6 +347,7 @@
 
 .removeButton:not(:disabled):hover {
   background: rgba(248, 113, 113, 0.15);
+  transform: translateY(-1px);
 }
 
 .formActions {
@@ -343,33 +360,36 @@
 
 .inlineError {
   margin: 0;
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: var(--feedback-error-bg);
+  color: var(--feedback-error-text);
+  border: 1px solid var(--feedback-error-border);
   padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 .inlineSuccess {
   margin: 0;
-  background: #dcfce7;
-  color: #047857;
-  border: 1px solid #bbf7d0;
+  background: var(--feedback-success-bg);
+  color: var(--feedback-success-text);
+  border: 1px solid var(--feedback-success-border);
   padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 .supportMessage {
   margin: 0;
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  background: var(--feedback-info-bg);
+  color: var(--feedback-info-text);
+  border: 1px solid var(--feedback-info-border);
   padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 .supportMessage a {
-  color: #1d4ed8;
+  color: var(--feedback-info-text);
   font-weight: 600;
   text-decoration: none;
 }
@@ -382,10 +402,12 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding: 1.5rem;
-  border: 1px solid #dbeafe;
-  border-radius: 12px;
-  background: #eff6ff;
+  padding: 1.75rem;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  border-radius: var(--radius-lg);
+  background: rgba(238, 242, 255, 0.6);
+  box-shadow: 0 18px 40px -26px rgba(79, 70, 229, 0.4);
+  backdrop-filter: blur(6px);
 }
 
 .exerciseEditorHeader {
@@ -402,22 +424,23 @@
 
 .exerciseEditorHeader p {
   margin: 0.25rem 0 0;
-  color: #1d4ed8;
+  color: var(--accent-600);
 }
 
 .editorCloseButton {
   background: transparent;
   border: none;
-  color: #1f2937;
+  color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
   padding: 0.35rem 0.75rem;
   border-radius: 8px;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .editorCloseButton:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
 }
 
 .exerciseEditorGrid {
@@ -443,47 +466,52 @@
 }
 
 .editorPrimaryButton {
-  background: #2563eb;
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  color: var(--text-contrast);
   border: none;
-  border-radius: 999px;
-  padding: 0.65rem 1.6rem;
+  border-radius: var(--radius-pill);
+  padding: 0.7rem 1.7rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  box-shadow: 0 16px 36px -22px rgba(79, 70, 229, 0.55);
 }
 
 .editorPrimaryButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .editorPrimaryButton:not(:disabled):hover {
-  background: #1d4ed8;
+  transform: translateY(-2px);
 }
 
 .editorPrimaryButton:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .editorSecondaryButton {
-  background: #e0e7ff;
-  color: #312e81;
-  border: none;
-  border-radius: 999px;
-  padding: 0.6rem 1.4rem;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-700);
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  border-radius: var(--radius-pill);
+  padding: 0.65rem 1.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 24px -18px rgba(99, 102, 241, 0.35);
 }
 
 .editorSecondaryButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .editorSecondaryButton:not(:disabled):hover {
-  background: #c7d2fe;
+  background: rgba(99, 102, 241, 0.18);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 720px) {

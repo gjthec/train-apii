@@ -1,34 +1,53 @@
 .error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: var(--feedback-error-bg);
+  color: var(--feedback-error-text);
+  border: 1px solid var(--feedback-error-border);
   padding: 1rem 1.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 .cardHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .cardHeader h3 {
   font-size: 1.25rem;
+  color: var(--text-primary);
 }
 
 .cardHeader time {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.16);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-pill);
 }
 
 .cardFooter {
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   display: flex;
-  gap: 1.5rem;
-  color: #4b5563;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+}
+
+.cardFooter span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
 }
 
 .cardFooter span strong {
-  color: #111827;
+  color: var(--text-primary);
 }

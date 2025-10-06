@@ -6,9 +6,10 @@
 
 .empty {
   padding: 2rem;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 12px;
-  color: #9a3412;
+  background: var(--feedback-warning-bg);
+  border: 1px solid var(--feedback-warning-border);
+  border-radius: var(--radius-lg);
+  color: var(--feedback-warning-text);
   text-align: center;
+  box-shadow: var(--shadow-xs);
 }
