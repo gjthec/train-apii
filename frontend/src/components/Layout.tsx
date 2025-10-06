@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import styles from '@/styles/Layout.module.css';
 
@@ -23,6 +24,7 @@ const navLinks: Array<{ href: string; label: string }> = [
 
 export default function Layout({ title, description, children }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const pathname = usePathname();
 
   return (
     <div
@@ -64,11 +66,23 @@ export default function Layout({ title, description, children }: LayoutProps) {
           aria-hidden={!isSidebarOpen}
         >
           <ul>
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href}>{link.label}</Link>
-              </li>
-            ))}
+            {navLinks.map((link) => {
+              const isActive =
+                pathname === link.href ||
+                (link.href !== '/' && pathname.startsWith(`${link.href}/`));
+
+              return (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className={isActive ? styles.activeLink : undefined}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       </aside>
