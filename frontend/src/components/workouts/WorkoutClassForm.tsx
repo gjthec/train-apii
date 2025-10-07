@@ -17,6 +17,8 @@ import type {
   WorkoutSetDraft
 } from './types';
 
+type WorkoutFormIntent = 'create' | 'register' | 'edit';
+
 interface WorkoutClassFormProps {
   onSubmit: (input: NewWorkoutClassInput) => Promise<void>;
   isSubmitting: boolean;
@@ -30,6 +32,8 @@ interface WorkoutClassFormProps {
   prefillRequest?: {
     workout: WorkoutClass;
     token: number;
+    intent?: Exclude<WorkoutFormIntent, 'create'>;
+    sessionId?: string | null;
   } | null;
   onClearPrefill?: () => void;
 }
@@ -103,6 +107,7 @@ const createEmptyExercise = (): WorkoutExerciseDraft => ({
 
 const createInitialState = (): WorkoutClassFormState => ({
   workoutId: null,
+  sessionId: null,
   name: '',
   focus: '',
   scheduledFor: getTodayInputValue(),
@@ -116,7 +121,11 @@ const toNumberOrUndefined = (value: string, isInteger = false): number | undefin
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-const createStateFromWorkout = (workout: WorkoutClass): WorkoutClassFormState => {
+const createStateFromWorkout = (
+  workout: WorkoutClass,
+  intent: WorkoutFormIntent,
+  sessionId: string | null
+): WorkoutClassFormState => {
   const exercises = workout.exercises.length > 0 ? workout.exercises : [
     {
       id: generateLocalId('exercise'),
@@ -130,9 +139,13 @@ const createStateFromWorkout = (workout: WorkoutClass): WorkoutClassFormState =>
 
   return {
     workoutId: workout.id ?? null,
+    sessionId: intent === 'edit' ? sessionId : null,
     name: workout.name ?? '',
     focus: workout.focus ?? '',
-    scheduledFor: getTodayInputValue(),
+    scheduledFor:
+      intent === 'edit' && workout.scheduledFor
+        ? normalizeDateInput(workout.scheduledFor)
+        : getTodayInputValue(),
     notes: workout.notes ?? '',
     exercises: exercises.map((exercise) => ({
       id: exercise.id ?? generateLocalId('exercise'),
@@ -177,6 +190,7 @@ export default function WorkoutClassForm({
   onClearPrefill
 }: WorkoutClassFormProps) {
   const [formState, setFormState] = useState<WorkoutClassFormState>(() => createInitialState());
+  const [formIntent, setFormIntent] = useState<WorkoutFormIntent>('create');
   const activePrefill = prefillRequest?.workout;
   const exercisesCount = formState.exercises.length;
   const hasMuscleGroups = muscleGroups.length > 0;
@@ -195,9 +209,18 @@ export default function WorkoutClassForm({
       return;
     }
 
-    setFormState(createStateFromWorkout(prefillRequest.workout));
+    const intent = prefillRequest.intent ?? 'register';
+    const nextSessionId = prefillRequest.sessionId ?? null;
+    setFormState(createStateFromWorkout(prefillRequest.workout, intent, nextSessionId));
+    setFormIntent(intent);
     setExerciseEditor(null);
     setExerciseLibrarySuccess(null);
+  }, [prefillRequest]);
+
+  useEffect(() => {
+    if (!prefillRequest) {
+      setFormIntent('create');
+    }
   }, [prefillRequest]);
 
   useEffect(() => {
@@ -296,8 +319,38 @@ export default function WorkoutClassForm({
     return normalized;
   }, [activePrefill?.scheduledFor]);
 
+  const headerTitle =
+    formIntent === 'edit' ? 'Editar treino' : 'Novo treino do dia';
+
+  const headerDescription =
+    formIntent === 'edit'
+      ? 'Atualize os exercícios, séries e cargas deste treino salvo.'
+      : 'Organize os exercícios com séries, cargas e repetições para acompanhar sua evolução.';
+
+  const submitLabel = (() => {
+    if (isSubmitting) {
+      return 'Salvando...';
+    }
+
+    if (formIntent === 'edit') {
+      return 'Salvar alterações';
+    }
+
+    if (formIntent === 'register') {
+      return 'Registrar novo dia';
+    }
+
+    return 'Cadastrar treino';
+  })();
+
+  const prefillInstructions =
+    formIntent === 'edit'
+      ? 'Faça as alterações necessárias e clique em “Salvar alterações”.'
+      : 'Atualize as cargas e escolha a data para registrar um novo dia.';
+
   const handleClearPrefillClick = () => {
     setFormState(createInitialState());
+    setFormIntent('create');
     onClearPrefill?.();
   };
 
@@ -598,6 +651,7 @@ export default function WorkoutClassForm({
 
     const payload: NewWorkoutClassInput = {
       workoutId: formState.workoutId ?? undefined,
+      sessionId: formIntent === 'edit' ? formState.sessionId ?? undefined : undefined,
       name: formState.name,
       focus: formState.focus,
       scheduledFor: normalizeDateInput(formState.scheduledFor),
@@ -618,6 +672,7 @@ export default function WorkoutClassForm({
     try {
       await onSubmit(payload);
       setFormState(createInitialState());
+      setFormIntent('create');
       setExerciseEditor(null);
       setExerciseLibrarySuccess(null);
       setExerciseLibraryError(null);
@@ -631,8 +686,8 @@ export default function WorkoutClassForm({
     <section className={styles.container}>
       <header className={styles.header}>
         <div>
-          <h2>Novo treino do dia</h2>
-          <p>Organize os exercícios com séries, cargas e repetições para acompanhar sua evolução.</p>
+          <h2>{headerTitle}</h2>
+          <p>{headerDescription}</p>
         </div>
         <span className={styles.exerciseCount}>
           {exercisesCount} {exercisesCount === 1 ? 'exercício' : 'exercícios'}
@@ -641,11 +696,12 @@ export default function WorkoutClassForm({
       {activePrefill ? (
         <div className={styles.prefillBanner}>
           <div>
-            <strong>Treino base carregado:</strong> {activePrefill.name}
+            <strong>{formIntent === 'edit' ? 'Treino em edição:' : 'Treino base carregado:'}</strong>{' '}
+            {activePrefill.name}
             {prefillDateLabel ? ` (${prefillDateLabel})` : ''}
           </div>
           <div className={styles.prefillActions}>
-            <span>Atualize as cargas e escolha a data para registrar um novo dia.</span>
+            <span>{prefillInstructions}</span>
             <button type="button" className={styles.clearPrefillButton} onClick={handleClearPrefillClick}>
               Limpar formulário
             </button>
@@ -877,7 +933,7 @@ export default function WorkoutClassForm({
             Adicionar exercício
           </button>
           <button type="submit" className={styles.primaryButton} disabled={isSubmitting}>
-            {isSubmitting ? 'Salvando...' : 'Cadastrar treino'}
+            {submitLabel}
           </button>
         </div>
       </form>

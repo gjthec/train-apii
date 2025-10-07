@@ -8,6 +8,7 @@ interface WorkoutHistoryByDateProps {
   classes: WorkoutClass[];
   emptyLabel: string;
   onDuplicate?: (workout: WorkoutClass) => void;
+  onEdit?: (workout: WorkoutClass, sessionId?: string | null) => void;
   onDelete?: (workout: WorkoutClass) => void;
   deletingIds?: ReadonlySet<string>;
 }
@@ -16,6 +17,7 @@ export default function WorkoutHistoryByDate({
   classes,
   emptyLabel,
   onDuplicate,
+  onEdit,
   onDelete,
   deletingIds
 }: WorkoutHistoryByDateProps) {
@@ -29,6 +31,7 @@ export default function WorkoutHistoryByDate({
         classes={classes}
         emptyLabel={emptyLabel}
         onDuplicate={onDuplicate}
+        onEdit={onEdit}
         onDelete={onDelete}
         deletingIds={deletingIds}
       />

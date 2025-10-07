@@ -282,6 +282,7 @@ export interface WorkoutExerciseInput {
 
 export interface NewWorkoutClassInput {
   workoutId?: string;
+  sessionId?: string;
   name: string;
   focus?: string;
   scheduledFor?: string;
@@ -662,18 +663,22 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
   const uid = await requireUid();
   const db = getDb();
   const nowIso = new Date().toISOString();
-  const session: WorkoutSession = {
-    id: ensureIdentifier('session', Date.now(), undefined),
+  const existingWorkoutId = sanitizeOptionalString(input.workoutId);
+  const targetSessionId = sanitizeOptionalString(input.sessionId);
+
+  const createSessionPayload = (
+    id: string,
+    previous?: Pick<WorkoutSession, 'createdAt'>
+  ): WorkoutSession => ({
+    id,
     scheduledFor,
     notes,
     exercises,
     exerciseCount: exercises.length,
     totalSets,
-    createdAt: nowIso,
+    createdAt: previous?.createdAt ?? nowIso,
     updatedAt: nowIso
-  };
-
-  const existingWorkoutId = sanitizeOptionalString(input.workoutId);
+  });
 
   if (existingWorkoutId) {
     const workoutRef = doc(db, `users/${uid}/workouts/${existingWorkoutId}`);
@@ -685,23 +690,46 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
 
     const data = snapshot.data() as DocumentData;
     const existingSessions = toWorkoutSessions(data.sessions);
-    const mergedSessions = sortSessionsByDateDesc([
-      session,
-      ...existingSessions.filter((existing) => existing.id !== session.id)
-    ]);
+
+    let mergedSessions: WorkoutSession[];
+
+    if (targetSessionId) {
+      const sessionToUpdate = existingSessions.find((item) => item.id === targetSessionId);
+      if (!sessionToUpdate) {
+        throw new Error('O dia selecionado para edição não foi encontrado.');
+      }
+
+      const updatedSession = createSessionPayload(targetSessionId, {
+        createdAt: sessionToUpdate.createdAt ?? sessionToUpdate.updatedAt ?? nowIso
+      });
+
+      mergedSessions = sortSessionsByDateDesc(
+        existingSessions.map((item) => (item.id === targetSessionId ? updatedSession : item))
+      );
+    } else {
+      const newSession = createSessionPayload(
+        ensureIdentifier('session', Date.now(), undefined)
+      );
+      mergedSessions = sortSessionsByDateDesc([
+        newSession,
+        ...existingSessions.filter((existing) => existing.id !== newSession.id)
+      ]);
+    }
+
     const serializedSessions = mergedSessions.map(serializeWorkoutSession);
     const existingCreatedAt = toIsoDate(data.createdAt) ?? nowIso;
     const nextFocus = focus ?? toStringOrUndefined(data.focus);
     const nextNotes = notes ?? toStringOrUndefined(data.notes);
+    const latestSession = mergedSessions[0];
 
     const updatePayload: Record<string, unknown> = {
       name,
       sessions: serializedSessions,
       sessionCount: mergedSessions.length,
-      scheduledFor: session.scheduledFor,
-      exerciseCount: session.exerciseCount,
-      totalSets: session.totalSets,
-      lastSessionOn: session.scheduledFor,
+      scheduledFor: latestSession?.scheduledFor,
+      exerciseCount: latestSession?.exerciseCount,
+      totalSets: latestSession?.totalSets,
+      lastSessionOn: latestSession?.scheduledFor,
       updatedAt: nowIso
     };
 
@@ -715,34 +743,37 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
 
     await updateDoc(workoutRef, updatePayload);
 
+    const activeSession = mergedSessions.find((item) => item.id === (targetSessionId ?? mergedSessions[0]?.id));
+
     return {
       id: existingWorkoutId,
       name,
       focus: nextFocus,
-      scheduledFor: session.scheduledFor,
-      notes: nextNotes,
-      exercises: session.exercises,
-      exerciseCount: session.exerciseCount,
-      totalSets: session.totalSets,
+      scheduledFor: activeSession?.scheduledFor ?? latestSession?.scheduledFor,
+      notes: activeSession?.notes ?? nextNotes,
+      exercises: activeSession?.exercises ?? latestSession?.exercises ?? [],
+      exerciseCount: activeSession?.exerciseCount ?? latestSession?.exerciseCount ?? 0,
+      totalSets: activeSession?.totalSets ?? latestSession?.totalSets ?? 0,
       createdAt: existingCreatedAt,
       updatedAt: nowIso,
       sessions: mergedSessions,
       sessionCount: mergedSessions.length,
-      lastSessionOn: session.scheduledFor
+      lastSessionOn: latestSession?.scheduledFor
     } satisfies WorkoutClass;
   }
 
+  const newSession = createSessionPayload(ensureIdentifier('session', Date.now(), undefined));
   const workoutsCollection = collection(db, `users/${uid}/workouts`);
   const docRef = await addDoc(workoutsCollection, {
     name,
     ...(focus ? { focus } : {}),
     ...(notes ? { notes } : {}),
-    sessions: [serializeWorkoutSession(session)],
+    sessions: [serializeWorkoutSession(newSession)],
     sessionCount: 1,
-    scheduledFor: session.scheduledFor,
-    exerciseCount: session.exerciseCount,
-    totalSets: session.totalSets,
-    lastSessionOn: session.scheduledFor,
+    scheduledFor: newSession.scheduledFor,
+    exerciseCount: newSession.exerciseCount,
+    totalSets: newSession.totalSets,
+    lastSessionOn: newSession.scheduledFor,
     createdAt: nowIso,
     updatedAt: nowIso
   });
@@ -751,16 +782,16 @@ export async function createWorkoutClass(input: NewWorkoutClassInput): Promise<W
     id: docRef.id,
     name,
     focus,
-    scheduledFor: session.scheduledFor,
+    scheduledFor: newSession.scheduledFor,
     notes,
-    exercises: session.exercises,
-    exerciseCount: session.exerciseCount,
-    totalSets: session.totalSets,
+    exercises: newSession.exercises,
+    exerciseCount: newSession.exerciseCount,
+    totalSets: newSession.totalSets,
     createdAt: nowIso,
     updatedAt: nowIso,
-    sessions: [session],
+    sessions: [newSession],
     sessionCount: 1,
-    lastSessionOn: session.scheduledFor
+    lastSessionOn: newSession.scheduledFor
   } satisfies WorkoutClass;
 }
 

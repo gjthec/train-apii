@@ -152,6 +152,15 @@ const formatScheduleForMessage = (value: string): string => {
 
 type WorkoutsPageMode = 'new' | 'existing';
 
+type WorkoutPrefillIntent = 'register' | 'edit';
+
+interface WorkoutPrefillRequest {
+  workout: WorkoutClass;
+  sessionId: string | null;
+  intent: WorkoutPrefillIntent;
+  token: number;
+}
+
 interface SelectChangeEvent {
   target: {
     value: string;
@@ -167,9 +176,7 @@ export default function WorkoutsPage() {
   const [muscleGroupError, setMuscleGroupError] = useState<string | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [exerciseError, setExerciseError] = useState<string | null>(null);
-  const [prefillRequest, setPrefillRequest] = useState<
-    { workout: WorkoutClass; token: number } | null
-  >(null);
+  const [prefillRequest, setPrefillRequest] = useState<WorkoutPrefillRequest | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(() => new Set());
   const [mode, setMode] = useState<WorkoutsPageMode>('new');
   const [selectedExistingId, setSelectedExistingId] = useState<string>('');
@@ -258,6 +265,7 @@ export default function WorkoutsPage() {
     setIsSubmitting(true);
 
     const isExistingWorkout = Boolean(input.workoutId);
+    const isEditingSession = Boolean(input.workoutId && input.sessionId);
 
     try {
       const savedWorkout = await createWorkoutClass(input);
@@ -284,7 +292,13 @@ export default function WorkoutsPage() {
         ? formatScheduleForMessage(savedWorkout.scheduledFor)
         : null;
 
-      if (isExistingWorkout) {
+      if (isEditingSession) {
+        setSuccessMessage(
+          formattedDate
+            ? `Treino ${savedWorkout.name} atualizado para o dia ${formattedDate}.`
+            : `Treino ${savedWorkout.name} atualizado com sucesso.`
+        );
+      } else if (isExistingWorkout) {
         setSuccessMessage(
           formattedDate
             ? `Novo dia registrado para ${savedWorkout.name} em ${formattedDate}.`
@@ -330,8 +344,14 @@ export default function WorkoutsPage() {
     setExercises((previous) => previous.filter((item) => item.id !== exerciseId));
   };
 
-  const handleReuseWorkout = (workout: WorkoutClass) => {
-    setPrefillRequest({ workout, token: Date.now() });
+  const handleReuseWorkout = (
+    workout: WorkoutClass,
+    options: { intent?: WorkoutPrefillIntent; sessionId?: string | null } = {}
+  ) => {
+    const intent = options.intent ?? 'register';
+    const sessionId = options.sessionId ?? null;
+
+    setPrefillRequest({ workout, token: Date.now(), intent, sessionId });
     setSuccessMessage(null);
     setError(null);
     setMode('new');
@@ -339,6 +359,10 @@ export default function WorkoutsPage() {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const handleEditWorkout = (workout: WorkoutClass, sessionId?: string | null) => {
+    handleReuseWorkout(workout, { intent: 'edit', sessionId: sessionId ?? null });
   };
 
   const handleDeleteWorkout = async (workout: WorkoutClass) => {
@@ -414,7 +438,8 @@ export default function WorkoutsPage() {
 
   const handleSelectExisting = () => {
     if (selectedWorkout) {
-      handleReuseWorkout(selectedWorkout);
+      const sessionId = selectedWorkout.sessions?.[0]?.id ?? null;
+      handleReuseWorkout(selectedWorkout, { sessionId });
     }
   };
 
@@ -539,6 +564,7 @@ export default function WorkoutsPage() {
             emptyLabel="Nenhum treino cadastrado."
             onDuplicate={handleReuseWorkout}
             onDelete={handleDeleteWorkout}
+            onEdit={handleEditWorkout}
             deletingIds={deletingIds}
           />
           {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
@@ -557,6 +583,7 @@ export default function WorkoutsPage() {
             emptyLabel="Nenhum treino cadastrado."
             onDuplicate={handleReuseWorkout}
             onDelete={handleDeleteWorkout}
+            onEdit={handleEditWorkout}
             deletingIds={deletingIds}
           />
         </section>

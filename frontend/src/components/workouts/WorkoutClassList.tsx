@@ -9,6 +9,7 @@ interface WorkoutClassListProps {
   classes: WorkoutClass[];
   emptyLabel: string;
   onDuplicate?: (workout: WorkoutClass) => void;
+  onEdit?: (workout: WorkoutClass, sessionId?: string | null) => void;
   onDelete?: (workout: WorkoutClass) => void;
   deletingIds?: ReadonlySet<string>;
 }
@@ -48,6 +49,7 @@ const sessionCountLabel = (count: number): string =>
 interface WorkoutCardProps {
   workout: WorkoutClass;
   onDuplicate?: (workout: WorkoutClass) => void;
+  onEdit?: (workout: WorkoutClass, sessionId?: string | null) => void;
   onDelete?: (workout: WorkoutClass) => void;
   deletingIds?: ReadonlySet<string>;
 }
@@ -55,7 +57,7 @@ interface WorkoutCardProps {
 const getSessionDateLabel = (session?: WorkoutSession): string =>
   formatDate(session?.scheduledFor) ?? 'Sem data';
 
-function WorkoutCard({ workout, onDuplicate, onDelete, deletingIds }: WorkoutCardProps) {
+function WorkoutCard({ workout, onDuplicate, onEdit, onDelete, deletingIds }: WorkoutCardProps) {
   const sessions = useMemo(() => workout.sessions ?? [], [workout.sessions]);
   const [activeSessionId, setActiveSessionId] = useState<string>(() => sessions[0]?.id ?? '');
 
@@ -100,6 +102,24 @@ function WorkoutCard({ workout, onDuplicate, onDelete, deletingIds }: WorkoutCar
     });
   };
 
+  const handleEditClick = () => {
+    if (!onEdit || !activeSession) {
+      return;
+    }
+
+    onEdit(
+      {
+        ...workout,
+        scheduledFor: activeSession.scheduledFor,
+        notes: activeSession.notes ?? workout.notes,
+        exercises: activeSession.exercises,
+        exerciseCount: activeSession.exerciseCount,
+        totalSets: activeSession.totalSets
+      },
+      activeSession.id
+    );
+  };
+
   return (
     <article className={styles.card}>
       <header className={styles.cardHeader}>
@@ -123,8 +143,18 @@ function WorkoutCard({ workout, onDuplicate, onDelete, deletingIds }: WorkoutCar
         ) : null}
       </header>
 
-      {onDuplicate || onDelete ? (
+      {onDuplicate || onDelete || onEdit ? (
         <div className={styles.cardActions}>
+          {onEdit ? (
+            <button
+              type="button"
+              className={styles.editButton}
+              onClick={handleEditClick}
+              disabled={isDeleting || !activeSession}
+            >
+              Editar treino
+            </button>
+          ) : null}
           {onDelete ? (
             <button
               type="button"
@@ -223,6 +253,7 @@ export default function WorkoutClassList({
   classes,
   emptyLabel,
   onDuplicate,
+  onEdit,
   onDelete,
   deletingIds
 }: WorkoutClassListProps) {
@@ -237,6 +268,7 @@ export default function WorkoutClassList({
           key={workout.id}
           workout={workout}
           onDuplicate={onDuplicate}
+          onEdit={onEdit}
           onDelete={onDelete}
           deletingIds={deletingIds}
         />

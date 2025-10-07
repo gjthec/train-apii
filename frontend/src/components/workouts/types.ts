@@ -15,6 +15,7 @@ export interface WorkoutExerciseDraft {
 
 export interface WorkoutClassFormState {
   workoutId: string | null;
+  sessionId: string | null;
   name: string;
   focus: string;
   scheduledFor: string;
