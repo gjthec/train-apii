@@ -36,7 +36,7 @@ export default function ExercisesPage() {
   return (
     <Layout title="Exercícios" description="Detalhes dos exercícios disponíveis para montar os treinos.">
       <Head>
-        <title>Train API - Exercícios</title>
+        <title>Onemorerep - Exercícios</title>
       </Head>
       {error ? <p className={styles.error}>{error}</p> : null}
       <ResourceList

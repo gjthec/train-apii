@@ -45,7 +45,7 @@ export default function ExerciseClassesPage() {
   return (
     <Layout title="Aulas do aluno" description="Lista das aulas obtidas via API de backend.">
       <Head>
-        <title>Train API - Aulas</title>
+        <title>Onemorerep - Aulas</title>
       </Head>
       {error ? <p className={styles.error}>{error}</p> : null}
       <ResourceList

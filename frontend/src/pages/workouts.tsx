@@ -451,7 +451,7 @@ export default function WorkoutsPage() {
   return (
     <Layout title="Treinos" description="Cadastre e acompanhe seus treinos diários personalizados.">
       <Head>
-        <title>Train API - Treinos</title>
+        <title>Onemorerep - Treinos</title>
       </Head>
       <section className={styles.modeSection}>
         <div className={styles.modeHeader}>

@@ -185,7 +185,7 @@ const DashboardsPage = () => {
       description="Acompanhe a evolução das cargas e repetições dos seus treinos ao longo do tempo."
     >
       <Head>
-        <title>Dashboards | Train API</title>
+        <title>Dashboards | Onemorerep</title>
       </Head>
       <section className={styles.pageSection}>
         <div className={styles.sectionHeader}>

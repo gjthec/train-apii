@@ -42,7 +42,7 @@ export default function SessionsPage() {
   return (
     <Layout title="Sessões" description="Sessões planejadas para cada aula e treino.">
       <Head>
-        <title>Train API - Sessões</title>
+        <title>Onemorerep - Sessões</title>
       </Head>
       {error ? <p className={styles.error}>{error}</p> : null}
       <ResourceList

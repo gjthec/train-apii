@@ -34,7 +34,7 @@ export default function LogoutPage() {
   return (
     <Layout title="Encerrar sessão">
       <Head>
-        <title>Train API - Logout</title>
+        <title>Onemorerep - Logout</title>
       </Head>
       <div className={styles.wrapper}>
         <div className={styles.panel}>
