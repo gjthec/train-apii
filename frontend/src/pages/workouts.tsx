@@ -68,6 +68,20 @@ const sortSessionsByDate = (sessions: WorkoutSession[]): WorkoutSession[] => {
   });
 };
 
+const toDate = (value?: string): Date | null => {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.includes('T') ? value : `${value}T00:00:00`;
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+};
+
 const mergeWorkoutSessions = (
   previous: WorkoutClass | undefined,
   incoming: WorkoutClass
@@ -189,6 +203,51 @@ export default function WorkoutsPage() {
 
     return sortedWorkouts.find((item) => item.id === selectedExistingId) ?? null;
   }, [sortedWorkouts, selectedExistingId]);
+
+  const { totalWorkouts, totalSessions, upcomingSessions, lastWorkoutDate } = useMemo(() => {
+    const sessionAccumulator = { total: 0, upcoming: 0 };
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    for (const workout of sortedWorkouts) {
+      const sessionCount =
+        typeof workout.sessionCount === 'number'
+          ? workout.sessionCount
+          : workout.sessions?.length ?? 0;
+      sessionAccumulator.total += sessionCount;
+
+      const sessions = workout.sessions ?? [];
+      for (const session of sessions) {
+        const scheduledDate = toDate(session.scheduledFor ?? session.updatedAt ?? session.createdAt);
+        if (scheduledDate && scheduledDate >= startOfToday) {
+          sessionAccumulator.upcoming += 1;
+        }
+      }
+
+      if (sessions.length === 0) {
+        const fallbackDate =
+          toDate(workout.scheduledFor ?? workout.updatedAt ?? workout.createdAt);
+        if (fallbackDate && fallbackDate >= startOfToday) {
+          sessionAccumulator.upcoming += 1;
+        }
+      }
+    }
+
+    const reference = sortedWorkouts.find((item) =>
+      Boolean(item.lastSessionOn || item.scheduledFor || item.updatedAt || item.createdAt)
+    );
+
+    const latestDateString = reference
+      ? reference.lastSessionOn ?? reference.scheduledFor ?? reference.updatedAt ?? reference.createdAt
+      : null;
+
+    return {
+      totalWorkouts: sortedWorkouts.length,
+      totalSessions: sessionAccumulator.total,
+      upcomingSessions: sessionAccumulator.upcoming,
+      lastWorkoutDate: latestDateString ? formatScheduleForMessage(latestDateString) : null
+    };
+  }, [sortedWorkouts]);
 
   useEffect(() => {
     let isMounted = true;
@@ -453,6 +512,47 @@ export default function WorkoutsPage() {
       <Head>
         <title>Onemorerep - Treinos</title>
       </Head>
+      <section className={styles.pageIntro}>
+        <div className={styles.introContent}>
+          <span className={styles.introTag}>Gestão diária</span>
+          <h1>Treinos organizados, evolução clara</h1>
+          <p className={styles.introDescription}>
+            Planeje as sessões da semana, registre cargas e acompanhe o progresso da sua equipe ou
+            dos alunos com uma visão centralizada.
+          </p>
+          <p className={styles.lastWorkout}>
+            {lastWorkoutDate ? (
+              <>
+                Último registro concluído em <strong>{lastWorkoutDate}</strong>.
+              </>
+            ) : (
+              <>Ainda não há registros cadastrados — comece adicionando o primeiro treino.</>
+            )}
+          </p>
+        </div>
+        <div className={styles.introStats}>
+          <article className={styles.statCard}>
+            <span className={styles.statLabel}>Treinos na biblioteca</span>
+            <strong className={styles.statValue}>{totalWorkouts}</strong>
+            <span className={styles.statHelper}>planos disponíveis</span>
+          </article>
+          <article className={styles.statCard}>
+            <span className={styles.statLabel}>Dias registrados</span>
+            <strong className={styles.statValue}>{totalSessions}</strong>
+            <span className={styles.statHelper}>com histórico completo</span>
+          </article>
+          <article className={styles.statCard}>
+            <span className={styles.statLabel}>Sessões agendadas</span>
+            <strong className={styles.statValue}>{upcomingSessions}</strong>
+            <span className={styles.statHelper}>a partir de hoje</span>
+          </article>
+          <article className={styles.statCard}>
+            <span className={styles.statLabel}>Exercícios cadastrados</span>
+            <strong className={styles.statValue}>{exercises.length}</strong>
+            <span className={styles.statHelper}>disponíveis para montar treinos</span>
+          </article>
+        </div>
+      </section>
       <section className={styles.modeSection}>
         <div className={styles.modeHeader}>
           <h3>Como deseja registrar o treino de hoje?</h3>
@@ -463,19 +563,31 @@ export default function WorkoutsPage() {
             type="button"
             role="tab"
             aria-selected={mode === 'new'}
-            className={mode === 'new' ? `${styles.modeButton} ${styles.modeButtonActive}` : styles.modeButton}
+            className={
+              mode === 'new' ? `${styles.modeButton} ${styles.modeButtonActive}` : styles.modeButton
+            }
             onClick={() => handleSelectMode('new')}
           >
-            Cadastrar novo treino
+            <span className={styles.modeButtonTitle}>Cadastro guiado</span>
+            <span className={styles.modeButtonSubtitle}>
+              Monte um treino do zero com exercícios e cargas atualizadas.
+            </span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={mode === 'existing'}
-            className={mode === 'existing' ? `${styles.modeButton} ${styles.modeButtonActive}` : styles.modeButton}
+            className={
+              mode === 'existing'
+                ? `${styles.modeButton} ${styles.modeButtonActive}`
+                : styles.modeButton
+            }
             onClick={() => handleSelectMode('existing')}
           >
-            Seguir treino existente
+            <span className={styles.modeButtonTitle}>Reaproveitar planejamento</span>
+            <span className={styles.modeButtonSubtitle}>
+              Escolha um treino salvo e registre um novo dia em minutos.
+            </span>
           </button>
         </div>
       </section>
