@@ -51,23 +51,40 @@ export default function ExerciseClassesPage() {
       <ResourceList
         items={classes}
         emptyLabel="Nenhuma aula encontrada."
-        renderItem={(item) => (
-          <article>
-            <header className={styles.cardHeader}>
-              <h3>{item.name}</h3>
-              <time>{formatDateTime(item.createdAt)}</time>
-            </header>
-            {item.description ? <p>{item.description}</p> : null}
-            <footer className={styles.cardFooter}>
-              <span>
-                Sessões: <strong>{formatSessionsCount(item.sessions)}</strong>
-              </span>
-              <span>
-                Duração total: <strong>{item.totalDuration ?? '–'}</strong>
-              </span>
-            </footer>
-          </article>
-        )}
+        renderItem={(item) => {
+          const formattedDate = formatDateTime(item.createdAt);
+          const sessionsCount = formatSessionsCount(item.sessions);
+
+          return (
+            <article className={styles.card}>
+              <header className={styles.cardHeader}>
+                <div>
+                  <h3 className={styles.cardTitle}>{item.name}</h3>
+                  <time
+                    className={styles.cardMeta}
+                    dateTime={item.createdAt ?? undefined}
+                  >
+                    Criada em {formattedDate}
+                  </time>
+                </div>
+                <span className={styles.cardBadge}>Sessões: {sessionsCount}</span>
+              </header>
+              {item.description ? (
+                <p className={styles.cardDescription}>{item.description}</p>
+              ) : null}
+              <footer className={styles.cardFooter}>
+                <div className={styles.metaItem}>
+                  <span className={styles.metaLabel}>Duração total</span>
+                  <span className={styles.metaValue}>{item.totalDuration ?? '–'}</span>
+                </div>
+                <div className={styles.metaItem}>
+                  <span className={styles.metaLabel}>Código da aula</span>
+                  <span className={styles.metaValue}>{item.id ?? '–'}</span>
+                </div>
+              </footer>
+            </article>
+          );
+        }}
       />
     </Layout>
   );
