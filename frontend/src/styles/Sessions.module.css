@@ -1,45 +1,72 @@
 .error {
-  background: #fee2e2;
+  background: rgba(254, 226, 226, 0.9);
   color: #991b1b;
-  border: 1px solid #fecaca;
+  border: 1px solid rgba(254, 202, 202, 0.9);
   padding: 1rem 1.5rem;
-  border-radius: 10px;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(185, 28, 28, 0.12);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
+  align-items: flex-start;
+  gap: 1.5rem;
 }
 
-.cardHeader span {
-  background: #7c3aed;
-  color: #ffffff;
-  padding: 0.25rem 0.75rem;
+.cardTitle {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.cardDescription {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-muted);
+}
+
+.status {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(59, 130, 246, 0.2));
+  color: #312e81;
+  padding: 0.3rem 0.85rem;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
-  margin-top: 1rem;
 }
 
-.metrics div {
-  background: #eef2ff;
-  border-radius: 10px;
-  padding: 0.75rem;
+.metricItem {
+  background: rgba(124, 58, 237, 0.08);
+  border-radius: 18px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 1px solid rgba(129, 140, 248, 0.35);
 }
 
-.metrics dt {
+.metricLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.metricValue {
+  font-size: 1.05rem;
   font-weight: 600;
   color: #312e81;
-}
-
-.metrics dd {
-  color: #4338ca;
 }

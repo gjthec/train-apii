@@ -43,29 +43,33 @@ export default function ExercisesPage() {
         items={exercises}
         emptyLabel="Nenhum exercício cadastrado."
         renderItem={(item) => (
-          <article>
+          <article className={styles.card}>
             <header className={styles.cardHeader}>
-              <div>
-                <h3>{item.name}</h3>
-                {item.muscleGroup ? <p>{item.muscleGroup}</p> : null}
+              <div className={styles.cardTitleGroup}>
+                <h3 className={styles.cardTitle}>{item.name}</h3>
+                {item.muscleGroup ? (
+                  <p className={styles.cardSubtitle}>{item.muscleGroup}</p>
+                ) : null}
               </div>
               {item.modality ? <span className={styles.modality}>{item.modality}</span> : null}
             </header>
-            {item.description ? <p>{item.description}</p> : null}
+            {item.description ? (
+              <p className={styles.cardDescription}>{item.description}</p>
+            ) : null}
             <dl className={styles.metrics}>
-              <div>
-                <dt>Equipamento</dt>
-                <dd>{item.equipment ?? 'Livre'}</dd>
+              <div className={styles.metricItem}>
+                <dt className={styles.metricLabel}>Equipamento</dt>
+                <dd className={styles.metricValue}>{item.equipment ?? 'Livre'}</dd>
               </div>
-              <div>
-                <dt>Séries x Repetições</dt>
-                <dd>
+              <div className={styles.metricItem}>
+                <dt className={styles.metricLabel}>Séries x Repetições</dt>
+                <dd className={styles.metricValue}>
                   {formatNullableNumber(item.sets)} x {formatNullableNumber(item.repetitions)}
                 </dd>
               </div>
-              <div>
-                <dt>Descanso</dt>
-                <dd>{item.rest ?? '–'}</dd>
+              <div className={styles.metricItem}>
+                <dt className={styles.metricLabel}>Descanso</dt>
+                <dd className={styles.metricValue}>{item.rest ?? '–'}</dd>
               </div>
             </dl>
           </article>

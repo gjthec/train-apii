@@ -49,24 +49,28 @@ export default function SessionsPage() {
         items={sessions}
         emptyLabel="Nenhuma sessão cadastrada."
         renderItem={(item) => (
-          <article>
+          <article className={styles.card}>
             <header className={styles.cardHeader}>
-              <h3>{item.title}</h3>
-              {item.status ? <span>{item.status}</span> : null}
+              <div>
+                <h3 className={styles.cardTitle}>{item.title}</h3>
+                {item.description ? (
+                  <p className={styles.cardDescription}>{item.description}</p>
+                ) : null}
+              </div>
+              {item.status ? <span className={styles.status}>{item.status}</span> : null}
             </header>
-            {item.description ? <p>{item.description}</p> : null}
             <dl className={styles.metrics}>
-              <div>
-                <dt>Data</dt>
-                <dd>{formatDateTime(item.start)}</dd>
+              <div className={styles.metricItem}>
+                <dt className={styles.metricLabel}>Data</dt>
+                <dd className={styles.metricValue}>{formatDateTime(item.start)}</dd>
               </div>
-              <div>
-                <dt>Duração</dt>
-                <dd>{item.duration ?? '–'}</dd>
+              <div className={styles.metricItem}>
+                <dt className={styles.metricLabel}>Duração</dt>
+                <dd className={styles.metricValue}>{item.duration ?? '–'}</dd>
               </div>
-              <div>
-                <dt>Aula</dt>
-                <dd>{item.className ?? '–'}</dd>
+              <div className={styles.metricItem}>
+                <dt className={styles.metricLabel}>Aula</dt>
+                <dd className={styles.metricValue}>{item.className ?? '–'}</dd>
               </div>
             </dl>
           </article>

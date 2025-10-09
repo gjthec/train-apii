@@ -9,11 +9,11 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding: clamp(2rem, 4vw, 2.75rem);
-  border-radius: 32px;
-  border: 1px solid var(--color-border);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(224, 242, 254, 0.65));
-  box-shadow: var(--shadow-elevated);
+  padding: clamp(2rem, 4vw, 2.85rem);
+  border-radius: 36px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(224, 242, 254, 0.7));
+  box-shadow: 0 32px 70px rgba(15, 23, 42, 0.2);
   backdrop-filter: blur(10px);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -25,7 +25,8 @@
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.25), transparent 60%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.25), transparent 60%),
+    radial-gradient(circle, rgba(79, 70, 229, 0.15), transparent 70%);
   opacity: 0.7;
   z-index: -1;
   transition: transform 0.4s ease;
@@ -34,6 +35,7 @@
 .card h3 {
   font-size: 1.4rem;
   letter-spacing: -0.01em;
+  color: #1e1b4b;
 }
 
 .card p {
@@ -59,7 +61,7 @@
   gap: 0.65rem;
   margin-top: auto;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-accent);
   letter-spacing: 0.01em;
   transition: transform 0.3s ease, color 0.3s ease;
 }

@@ -481,32 +481,58 @@ export default function WorkoutsPage() {
       </section>
 
       {mode === 'new' ? (
-        <section className={styles.formSection}>
-          <WorkoutClassForm
-            onSubmit={handleCreateWorkout}
-            isSubmitting={isSubmitting}
-            muscleGroups={muscleGroups}
-            muscleGroupError={muscleGroupError}
-            exercises={exercises}
-            exerciseError={exerciseError}
-            onRegisterExercise={handleRegisterExercise}
-            onUpdateExercise={handleUpdateExercise}
-            onDeleteExercise={handleDeleteExerciseFromLibrary}
-            prefillRequest={prefillRequest}
-            onClearPrefill={handleClearPrefill}
-          />
-          {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
-          {error ? <p className={styles.error}>{error}</p> : null}
-        </section>
+        <div className={styles.newModeGrid}>
+          <section className={`${styles.formSection} ${styles.primaryPanel}`}>
+            <WorkoutClassForm
+              onSubmit={handleCreateWorkout}
+              isSubmitting={isSubmitting}
+              muscleGroups={muscleGroups}
+              muscleGroupError={muscleGroupError}
+              exercises={exercises}
+              exerciseError={exerciseError}
+              onRegisterExercise={handleRegisterExercise}
+              onUpdateExercise={handleUpdateExercise}
+              onDeleteExercise={handleDeleteExerciseFromLibrary}
+              prefillRequest={prefillRequest}
+              onClearPrefill={handleClearPrefill}
+            />
+            {successMessage || error ? (
+              <div className={styles.feedbackStack}>
+                {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
+                {error ? <p className={styles.error}>{error}</p> : null}
+              </div>
+            ) : null}
+          </section>
+
+          <section className={`${styles.historyPreview} ${styles.secondaryPanel}`}>
+            <header className={styles.historyHeader}>
+              <div>
+                <span className={styles.sectionEyebrow}>Histórico rápido</span>
+                <h3>Treinos anteriores</h3>
+              </div>
+              <p>Selecione um treino e clique em “Registrar novo dia” para reaproveitar o planejamento.</p>
+            </header>
+            <WorkoutHistoryByDate
+              classes={sortedWorkouts}
+              emptyLabel="Nenhum treino cadastrado."
+              onDuplicate={handleReuseWorkout}
+              onDelete={handleDeleteWorkout}
+              onEdit={handleEditWorkout}
+              deletingIds={deletingIds}
+            />
+          </section>
+        </div>
       ) : null}
 
       {mode === 'existing' ? (
-        <section className={styles.historySection}>
+        <section className={`${styles.historySection} ${styles.primaryPanel}`}>
           <header className={styles.historyHeader}>
-            <h3>Escolha um treino já cadastrado</h3>
+            <div>
+              <span className={styles.sectionEyebrow}>Biblioteca de treinos</span>
+              <h3>Escolha um treino já cadastrado</h3>
+            </div>
             <p>
-              Clique em “Registrar novo dia” para carregar o treino selecionado no formulário e atualizar as cargas
-              conforme necessário.
+              Carregue um treino existente para atualizar as cargas e registrar um novo dia sem perder o histórico.
             </p>
           </header>
           <div className={styles.existingSelector}>
@@ -567,25 +593,12 @@ export default function WorkoutsPage() {
             onEdit={handleEditWorkout}
             deletingIds={deletingIds}
           />
-          {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
-          {error ? <p className={styles.error}>{error}</p> : null}
-        </section>
-      ) : null}
-
-      {mode === 'new' ? (
-        <section className={styles.historyPreview}>
-          <header className={styles.historyHeader}>
-            <h3>Treinos anteriores</h3>
-            <p>Precisa repetir um treino? Escolha abaixo e toque em “Registrar novo dia”.</p>
-          </header>
-          <WorkoutHistoryByDate
-            classes={sortedWorkouts}
-            emptyLabel="Nenhum treino cadastrado."
-            onDuplicate={handleReuseWorkout}
-            onDelete={handleDeleteWorkout}
-            onEdit={handleEditWorkout}
-            deletingIds={deletingIds}
-          />
+          {successMessage || error ? (
+            <div className={styles.feedbackStack}>
+              {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
+              {error ? <p className={styles.error}>{error}</p> : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
     </Layout>
