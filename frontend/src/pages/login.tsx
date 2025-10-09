@@ -87,11 +87,11 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Train API - Login</title>
+        <title>Onemorerep - Login</title>
       </Head>
       <div className={styles.pageBackground}>
         <div className={styles.panel}>
-          <span className={styles.brandChip}>Train API</span>
+          <span className={styles.brandChip}>Onemorerep</span>
           <h1>Acesse sua conta</h1>
           <p className={styles.subtitle}>
             Entre com o Google para sincronizar treinos e continuar de onde parou.

@@ -41,7 +41,7 @@ export default function HomePage() {
   return (
     <Layout title="Painel do aluno" description="Escolha um módulo para começar.">
       <Head>
-        <title>Train API - Painel</title>
+        <title>Onemorerep - Painel</title>
       </Head>
       <div className={styles.grid}>
         {cards.map((card) => (

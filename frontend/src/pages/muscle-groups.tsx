@@ -131,7 +131,7 @@ export default function MuscleGroupsPage() {
       description="Cadastre e organize os grupos musculares utilizados nos seus treinos."
     >
       <Head>
-        <title>Train API - Grupos musculares</title>
+        <title>Onemorerep - Grupos musculares</title>
       </Head>
       <section className={styles.formSection}>
         <form onSubmit={handleSubmit} className={styles.form}>

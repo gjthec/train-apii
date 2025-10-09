@@ -59,7 +59,7 @@ export default function Layout({ title, description, children }: LayoutProps) {
             <span />
           </span>
         </button>
-        {isSidebarOpen ? <h1 className={styles.brand}>Train API</h1> : null}
+        {isSidebarOpen ? <h1 className={styles.brand}>Onemorerep</h1> : null}
         <nav
           id="sidebar-navigation"
           className={isSidebarOpen ? undefined : styles.navHidden}
