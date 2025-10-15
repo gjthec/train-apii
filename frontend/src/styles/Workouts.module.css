@@ -202,6 +202,81 @@
   box-shadow: 0 28px 60px -34px rgba(15, 23, 42, 0.35);
 }
 
+.formHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: clamp(1.5rem, 3vw, 2rem);
+}
+
+.formHeader h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.3vw, 1.75rem);
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.formHeader p {
+  margin: 0;
+  color: #1e293b;
+  line-height: 1.6;
+  max-width: 620px;
+}
+
+.newWorkoutPanel {
+  background: linear-gradient(165deg, rgba(37, 99, 235, 0.14) 0%, rgba(255, 255, 255, 0.95) 55%, #ffffff 100%);
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: 0 36px 72px -38px rgba(37, 99, 235, 0.45);
+}
+
+.newWorkoutPanel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+}
+
+.previousWorkoutsPanel {
+  background: linear-gradient(175deg, rgba(99, 102, 241, 0.12) 0%, rgba(255, 255, 255, 0.95) 60%, #ffffff 100%);
+  border-color: rgba(99, 102, 241, 0.26);
+  box-shadow: 0 32px 68px -36px rgba(99, 102, 241, 0.45);
+}
+
+.previousWorkoutsPanel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%);
+}
+
+.libraryPanel {
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.12) 0%, rgba(255, 255, 255, 0.97) 58%, #ffffff 100%);
+  border-color: rgba(14, 165, 233, 0.24);
+  box-shadow: 0 38px 80px -36px rgba(14, 165, 233, 0.42);
+}
+
+.libraryPanel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #0ea5e9 0%, #22d3ee 100%);
+}
+
+.newWorkoutPanel::after,
+.previousWorkoutsPanel::after,
+.libraryPanel::after {
+  pointer-events: none;
+}
+
 .secondaryPanel {
   border: 1px solid rgba(148, 163, 184, 0.25);
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.95), #ffffff);
@@ -232,6 +307,21 @@
   background: rgba(59, 130, 246, 0.12);
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
+}
+
+.formHeader .sectionEyebrow {
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.18);
+}
+
+.previousWorkoutsPanel .sectionEyebrow {
+  color: #6d28d9;
+  background: rgba(124, 58, 237, 0.16);
+}
+
+.libraryPanel .sectionEyebrow {
+  color: #0e7490;
+  background: rgba(14, 165, 233, 0.16);
 }
 
 .historyHeader h3 {

@@ -594,7 +594,17 @@ export default function WorkoutsPage() {
 
       {mode === 'new' ? (
         <div className={styles.newModeGrid}>
-          <section className={`${styles.formSection} ${styles.primaryPanel}`}>
+          <section className={`${styles.formSection} ${styles.primaryPanel} ${styles.newWorkoutPanel}`}>
+            <header className={styles.formHeader}>
+              <div>
+                <span className={styles.sectionEyebrow}>Novo planejamento</span>
+                <h2>Monte o treino do dia</h2>
+              </div>
+              <p>
+                Adicione exercícios com séries, repetições e cargas recomendadas para guiar o aluno com
+                clareza durante a sessão.
+              </p>
+            </header>
             <WorkoutClassForm
               onSubmit={handleCreateWorkout}
               isSubmitting={isSubmitting}
@@ -616,7 +626,7 @@ export default function WorkoutsPage() {
             ) : null}
           </section>
 
-          <section className={`${styles.historyPreview} ${styles.secondaryPanel}`}>
+          <section className={`${styles.historyPreview} ${styles.secondaryPanel} ${styles.previousWorkoutsPanel}`}>
             <header className={styles.historyHeader}>
               <div>
                 <span className={styles.sectionEyebrow}>Histórico rápido</span>
@@ -637,7 +647,7 @@ export default function WorkoutsPage() {
       ) : null}
 
       {mode === 'existing' ? (
-        <section className={`${styles.historySection} ${styles.primaryPanel}`}>
+        <section className={`${styles.historySection} ${styles.primaryPanel} ${styles.libraryPanel}`}>
           <header className={styles.historyHeader}>
             <div>
               <span className={styles.sectionEyebrow}>Biblioteca de treinos</span>
