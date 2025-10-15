@@ -1,11 +1,11 @@
 .appShell {
   display: grid;
-  grid-template-columns: clamp(240px, 21vw, 290px) minmax(0, 1fr);
+  grid-template-columns: clamp(220px, 18vw, 270px) minmax(0, 1fr);
   min-height: 100vh;
   transition: grid-template-columns 0.3s ease;
   position: relative;
-  gap: clamp(0.9rem, 2vw, 1.6rem);
-  padding: clamp(1rem, 2.2vw, 1.8rem);
+  gap: clamp(0.75rem, 1.6vw, 1.3rem);
+  padding: clamp(0.75rem, 1.8vw, 1.4rem);
 }
 
 .appShellCollapsed {
@@ -186,7 +186,7 @@
 }
 
 .contentArea {
-  padding: clamp(1.6rem, 3.5vw, 2.8rem) clamp(1rem, 2.8vw, 2.5rem);
+  padding: clamp(1.4rem, 3vw, 2.5rem) clamp(0.85rem, 2.4vw, 2.1rem);
   background: transparent;
   display: flex;
   flex-direction: column;
@@ -245,9 +245,20 @@
   backdrop-filter: blur(8px);
 }
 
+@media (max-width: 1400px) {
+  .appShell {
+    grid-template-columns: clamp(200px, 20vw, 240px) minmax(0, 1fr);
+  }
+
+  .contentArea {
+    padding-inline: clamp(0.75rem, 2vw, 1.6rem);
+  }
+}
+
 @media (max-width: 1200px) {
   .appShell {
-    grid-template-columns: clamp(220px, 30vw, 260px) minmax(0, 1fr);
+    grid-template-columns: clamp(180px, 28vw, 220px) minmax(0, 1fr);
+    padding: clamp(0.85rem, 2.4vw, 1.35rem);
   }
 }
 
