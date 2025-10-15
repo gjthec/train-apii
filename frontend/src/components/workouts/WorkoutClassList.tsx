@@ -46,18 +46,32 @@ const sessionSetLabel = (count: number): string =>
 const sessionCountLabel = (count: number): string =>
   `${count} ${count === 1 ? 'dia registrado' : 'dias registrados'}`;
 
+type WorkoutCardAccent = 'violet' | 'azure';
+
 interface WorkoutCardProps {
   workout: WorkoutClass;
   onDuplicate?: (workout: WorkoutClass) => void;
   onEdit?: (workout: WorkoutClass, sessionId?: string | null) => void;
   onDelete?: (workout: WorkoutClass) => void;
   deletingIds?: ReadonlySet<string>;
+  isFirst: boolean;
+  isLast: boolean;
+  accent: WorkoutCardAccent;
 }
 
 const getSessionDateLabel = (session?: WorkoutSession): string =>
   formatDate(session?.scheduledFor) ?? 'Sem data';
 
-function WorkoutCard({ workout, onDuplicate, onEdit, onDelete, deletingIds }: WorkoutCardProps) {
+function WorkoutCard({
+  workout,
+  onDuplicate,
+  onEdit,
+  onDelete,
+  deletingIds,
+  isFirst,
+  isLast,
+  accent
+}: WorkoutCardProps) {
   const sessions = useMemo(() => workout.sessions ?? [], [workout.sessions]);
   const [activeSessionId, setActiveSessionId] = useState<string>(() => sessions[0]?.id ?? '');
 
@@ -120,131 +134,149 @@ function WorkoutCard({ workout, onDuplicate, onEdit, onDelete, deletingIds }: Wo
     );
   };
 
+  const isFeatured = isFirst;
+  const cardClassName = [
+    styles.card,
+    styles.timelineCard,
+    isFeatured ? styles.primaryCard : styles.supportingCard
+  ].join(' ');
+
   return (
-    <article className={styles.card}>
-      <header className={styles.cardHeader}>
-        <div>
-          <h3>{workout.name}</h3>
-          <ul className={styles.metaList}>
-            {workout.focus ? <li>Foco: {workout.focus}</li> : null}
-            {sessionCount > 0 ? <li>{sessionCountLabel(sessionCount)}</li> : <li>Nenhum dia registrado</li>}
-            {formattedLastDate ? <li>Último registro: {formattedLastDate}</li> : null}
-          </ul>
-        </div>
-        {activeSession ? (
-          <div className={styles.metrics}>
-            <span>
-              <strong>{activeSession.exerciseCount}</strong> {sessionExerciseLabel(activeSession.exerciseCount)}
-            </span>
-            <span>
-              <strong>{activeSession.totalSets}</strong> {sessionSetLabel(activeSession.totalSets)}
-            </span>
+    <article
+      className={cardClassName}
+      data-first={isFirst ? 'true' : undefined}
+      data-last={isLast ? 'true' : undefined}
+      data-featured={isFeatured ? 'true' : undefined}
+      data-accent={accent}
+    >
+      <span className={styles.cardTimelineNode} aria-hidden="true" />
+      <div className={styles.cardContent}>
+        <header className={styles.cardHeader}>
+          <div>
+            <h3>{workout.name}</h3>
+            <ul className={styles.metaList}>
+              {workout.focus ? <li>Foco: {workout.focus}</li> : null}
+              {sessionCount > 0 ? <li>{sessionCountLabel(sessionCount)}</li> : <li>Nenhum dia registrado</li>}
+              {formattedLastDate ? <li>Último registro: {formattedLastDate}</li> : null}
+            </ul>
+          </div>
+          {activeSession ? (
+            <div className={styles.metrics}>
+              <span>
+                <strong>{activeSession.exerciseCount}</strong> {sessionExerciseLabel(activeSession.exerciseCount)}
+              </span>
+              <span>
+                <strong>{activeSession.totalSets}</strong> {sessionSetLabel(activeSession.totalSets)}
+              </span>
+            </div>
+          ) : null}
+        </header>
+
+        {workout.notes ? <p className={styles.notes}>{workout.notes}</p> : null}
+
+        {onDuplicate || onDelete || onEdit ? (
+          <div className={styles.cardActions}>
+            {onEdit ? (
+              <button
+                type="button"
+                className={styles.editButton}
+                onClick={handleEditClick}
+                disabled={isDeleting || !activeSession}
+              >
+                Editar treino
+              </button>
+            ) : null}
+            {onDelete ? (
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={() => onDelete(workout)}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Excluindo...' : 'Excluir treino'}
+              </button>
+            ) : null}
+            {onDuplicate ? (
+              <button
+                type="button"
+                className={styles.duplicateButton}
+                onClick={handleDuplicateClick}
+                disabled={isDeleting || !activeSession}
+              >
+                Registrar novo dia
+              </button>
+            ) : null}
           </div>
         ) : null}
-      </header>
 
-      {onDuplicate || onDelete || onEdit ? (
-        <div className={styles.cardActions}>
-          {onEdit ? (
-            <button
-              type="button"
-              className={styles.editButton}
-              onClick={handleEditClick}
-              disabled={isDeleting || !activeSession}
-            >
-              Editar treino
-            </button>
-          ) : null}
-          {onDelete ? (
-            <button
-              type="button"
-              className={styles.deleteButton}
-              onClick={() => onDelete(workout)}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Excluindo...' : 'Excluir treino'}
-            </button>
-          ) : null}
-          {onDuplicate ? (
-            <button
-              type="button"
-              className={styles.duplicateButton}
-              onClick={handleDuplicateClick}
-              disabled={isDeleting || !activeSession}
-            >
-              Registrar novo dia
-            </button>
-          ) : null}
-        </div>
-      ) : null}
+        {sessions.length > 1 ? (
+          <div
+            className={styles.sessionTabs}
+            role="tablist"
+            aria-label={`Dias registrados para ${workout.name}`}
+          >
+            {sessions.map((session) => {
+              const isActive = session.id === (activeSession?.id ?? '');
+              const className = isActive
+                ? `${styles.sessionTab} ${styles.activeSessionTab}`
+                : styles.sessionTab;
 
-      {sessions.length > 1 ? (
-        <div
-          className={styles.sessionTabs}
-          role="tablist"
-          aria-label={`Dias registrados para ${workout.name}`}
-        >
-          {sessions.map((session) => {
-            const isActive = session.id === (activeSession?.id ?? '');
-            const className = isActive
-              ? `${styles.sessionTab} ${styles.activeSessionTab}`
-              : styles.sessionTab;
-
-            return (
-              <button
-                key={session.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={className}
-                onClick={() => setActiveSessionId(session.id)}
-              >
-                <span className={styles.sessionTabLabel}>{getSessionDateLabel(session)}</span>
-                <span className={styles.sessionTabMeta}>
-                  {sessionExerciseLabel(session.exerciseCount)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-
-      {activeSession ? (
-        <div className={styles.sessionSummary}>
-          <div className={styles.sessionInfo}>
-            <strong>Dia selecionado:</strong> {formattedActiveDate}
+              return (
+                <button
+                  key={session.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={className}
+                  onClick={() => setActiveSessionId(session.id)}
+                >
+                  <span className={styles.sessionTabLabel}>{getSessionDateLabel(session)}</span>
+                  <span className={styles.sessionTabMeta}>
+                    {sessionExerciseLabel(session.exerciseCount)}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          {activeSession.notes ? <p className={styles.notes}>{activeSession.notes}</p> : null}
-        </div>
-      ) : (
-        <p className={styles.emptyMessage}>Nenhum dia cadastrado para este treino.</p>
-      )}
+        ) : null}
 
-      {activeSession ? (
-        <div className={styles.exerciseGrid}>
-          {activeSession.exercises.map((exercise) => (
-            <section key={exercise.id} className={styles.exerciseCard}>
-              <header className={styles.exerciseHeader}>
-                <div>
-                  <h4>{exercise.name}</h4>
-                  {exercise.muscleGroup ? <span>{exercise.muscleGroup}</span> : null}
-                </div>
-                <span className={styles.seriesCount}>{exercise.seriesCount} séries</span>
-              </header>
-              {exercise.notes ? <p className={styles.exerciseNotes}>{exercise.notes}</p> : null}
-              <ol className={styles.setList}>
-                {exercise.sets.map((set) => (
-                  <li key={set.id} className={styles.setItem}>
-                    <span className={styles.setOrder}>Série {set.order}</span>
-                    <span className={styles.setMetric}>{weightFormatter.format(set.weightKg)} kg</span>
-                    <span className={styles.setMetric}>{set.repetitions} repetições</span>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          ))}
-        </div>
-      ) : null}
+        {activeSession ? (
+          <div className={styles.sessionSummary}>
+            <div className={styles.sessionInfo}>
+              <strong>Dia selecionado:</strong> {formattedActiveDate}
+            </div>
+            {activeSession.notes ? <p className={styles.notes}>{activeSession.notes}</p> : null}
+          </div>
+        ) : (
+          <p className={styles.emptyMessage}>Nenhum dia cadastrado para este treino.</p>
+        )}
+
+        {activeSession ? (
+          <div className={styles.exerciseGrid}>
+            {activeSession.exercises.map((exercise) => (
+              <section key={exercise.id} className={styles.exerciseCard}>
+                <header className={styles.exerciseHeader}>
+                  <div>
+                    <h4>{exercise.name}</h4>
+                    {exercise.muscleGroup ? <span>{exercise.muscleGroup}</span> : null}
+                  </div>
+                  <span className={styles.seriesCount}>{exercise.seriesCount} séries</span>
+                </header>
+                {exercise.notes ? <p className={styles.exerciseNotes}>{exercise.notes}</p> : null}
+                <ol className={styles.setList}>
+                  {exercise.sets.map((set) => (
+                    <li key={set.id} className={styles.setItem}>
+                      <span className={styles.setOrder}>Série {set.order}</span>
+                      <span className={styles.setMetric}>{weightFormatter.format(set.weightKg)} kg</span>
+                      <span className={styles.setMetric}>{set.repetitions} repetições</span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </div>
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -263,7 +295,7 @@ export default function WorkoutClassList({
 
   return (
     <div className={styles.list}>
-      {classes.map((workout) => (
+      {classes.map((workout, index) => (
         <WorkoutCard
           key={workout.id}
           workout={workout}
@@ -271,6 +303,9 @@ export default function WorkoutClassList({
           onEdit={onEdit}
           onDelete={onDelete}
           deletingIds={deletingIds}
+          isFirst={index === 0}
+          isLast={index === classes.length - 1}
+          accent={index % 2 === 0 ? 'violet' : 'azure'}
         />
       ))}
     </div>
