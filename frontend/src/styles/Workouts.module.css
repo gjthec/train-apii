@@ -189,7 +189,14 @@
 .primaryPanel,
 .secondaryPanel {
   position: relative;
+}
+
+.primaryPanel {
   overflow: hidden;
+}
+
+.secondaryPanel {
+  overflow: visible;
 }
 
 .formSection,
@@ -200,6 +207,12 @@
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: #ffffff;
   box-shadow: 0 28px 60px -34px rgba(15, 23, 42, 0.35);
+}
+
+.historyPreview {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 3vw, 2.25rem);
 }
 
 .formHeader {
@@ -243,6 +256,17 @@
   background: linear-gradient(175deg, rgba(99, 102, 241, 0.12) 0%, rgba(255, 255, 255, 0.95) 60%, #ffffff 100%);
   border-color: rgba(99, 102, 241, 0.26);
   box-shadow: 0 32px 68px -36px rgba(99, 102, 241, 0.45);
+  isolation: isolate;
+}
+
+.previousWorkoutsPanel::before {
+  content: '';
+  position: absolute;
+  inset: -45% -40% 35% -45%;
+  background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.5) 0%, rgba(14, 165, 233, 0.18) 45%, rgba(255, 255, 255, 0) 72%);
+  opacity: 0.55;
+  transform: rotate(6deg);
+  z-index: 1;
 }
 
 .previousWorkoutsPanel::after {
@@ -253,6 +277,7 @@
   right: 0;
   height: 6px;
   background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%);
+  z-index: 3;
 }
 
 .libraryPanel {
@@ -293,6 +318,8 @@
   flex-direction: column;
   gap: 0.75rem;
   margin-bottom: clamp(1.5rem, 3vw, 2rem);
+  position: relative;
+  z-index: 4;
 }
 
 .sectionEyebrow {
@@ -336,6 +363,176 @@
   color: #475569;
   line-height: 1.6;
   max-width: 640px;
+}
+
+.historyPreviewContent {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.35rem, 2.75vw, 2rem);
+}
+
+.historySpotlight {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: clamp(1.4rem, 3vw, 2rem);
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  background: linear-gradient(140deg, rgba(79, 70, 229, 0.16) 0%, rgba(99, 102, 241, 0.12) 38%, rgba(255, 255, 255, 0.94) 100%);
+  box-shadow: 0 36px 74px -42px rgba(79, 70, 229, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2.25vw, 1.4rem);
+}
+
+.historySpotlight::before,
+.historySpotlight::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  z-index: 0;
+  filter: blur(0);
+}
+
+.historySpotlight::before {
+  top: -48%;
+  right: -24%;
+  width: clamp(220px, 32vw, 340px);
+  height: clamp(220px, 32vw, 340px);
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.4) 0%, rgba(99, 102, 241, 0.2) 55%, rgba(255, 255, 255, 0) 72%);
+}
+
+.historySpotlight::after {
+  bottom: -50%;
+  left: -18%;
+  width: clamp(240px, 36vw, 420px);
+  height: clamp(240px, 36vw, 420px);
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.24) 0%, rgba(129, 140, 248, 0.12) 40%, rgba(255, 255, 255, 0) 75%);
+}
+
+.historySpotlightHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: #1e1b4b;
+}
+
+.historySpotlightTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(79, 70, 229, 0.18);
+  color: #312e81;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.historySpotlightTitle {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+  font-weight: 600;
+  color: #1e1b4b;
+}
+
+.historySpotlightFocus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(129, 140, 248, 0.2);
+  color: #3730a3;
+  font-weight: 600;
+  font-size: 0.85rem;
+  width: fit-content;
+}
+
+.historySpotlightMetrics {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: clamp(0.85rem, 2vw, 1.15rem);
+}
+
+.historySpotlightMetric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.15rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 24px 52px -36px rgba(79, 70, 229, 0.55);
+}
+
+.historySpotlightMetricLabel {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+.historySpotlightMetricValue {
+  font-size: clamp(1.25rem, 2.5vw, 1.7rem);
+  font-weight: 700;
+  color: #111827;
+}
+
+.historySpotlightMetricHelper {
+  font-size: 0.85rem;
+  color: #4338ca;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.historySpotlightEmpty {
+  position: relative;
+  z-index: 1;
+  border-radius: 20px;
+  padding: clamp(1.35rem, 2.5vw, 1.85rem);
+  border: 1px dashed rgba(129, 140, 248, 0.45);
+  background: rgba(129, 140, 248, 0.12);
+  color: #312e81;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.historySpotlightEmpty strong {
+  font-size: 1.05rem;
+}
+
+.historySpotlightEmpty p {
+  margin: 0;
+}
+
+.historyListShell {
+  position: relative;
+  z-index: 1;
+  border-radius: 24px;
+  padding: clamp(1.4rem, 3vw, 2.1rem);
+  background: linear-gradient(185deg, rgba(236, 233, 254, 0.7) 0%, rgba(255, 255, 255, 0.94) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 34px 68px -48px rgba(79, 70, 229, 0.58);
+}
+
+.historyListShell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(129, 140, 248, 0.18);
+  pointer-events: none;
 }
 
 .existingSelector {
@@ -453,6 +650,14 @@
   .historyPreview {
     padding: 1.5rem;
   }
+
+  .historySpotlight {
+    padding: 1.25rem 1.6rem;
+  }
+
+  .historyListShell {
+    padding: 1.25rem 1.6rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -474,6 +679,18 @@
   .historySection,
   .historyPreview {
     padding: 1.35rem;
+  }
+
+  .historySpotlight {
+    padding: 1.1rem 1.35rem;
+  }
+
+  .historyListShell {
+    padding: 1.1rem 1.35rem;
+  }
+
+  .historySpotlightMetrics {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .selectRow {

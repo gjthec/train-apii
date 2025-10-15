@@ -204,6 +204,31 @@ export default function WorkoutsPage() {
     return sortedWorkouts.find((item) => item.id === selectedExistingId) ?? null;
   }, [sortedWorkouts, selectedExistingId]);
 
+  const featuredWorkoutSummary = useMemo(() => {
+    if (sortedWorkouts.length === 0) {
+      return null;
+    }
+
+    const latestWorkout = sortedWorkouts[0];
+    const sortedSessions = sortSessionsByDate(latestWorkout.sessions ?? []);
+    const latestSession = sortedSessions[0];
+    const highlightDate =
+      latestSession?.scheduledFor ??
+      latestWorkout.lastSessionOn ??
+      latestWorkout.scheduledFor ??
+      latestWorkout.updatedAt ??
+      latestWorkout.createdAt;
+
+    return {
+      name: latestWorkout.name,
+      focus: latestWorkout.focus ?? null,
+      formattedDate: highlightDate ? formatScheduleForMessage(highlightDate) : null,
+      exerciseCount: latestSession?.exerciseCount ?? latestWorkout.exerciseCount ?? null,
+      totalSets: latestSession?.totalSets ?? latestWorkout.totalSets ?? null,
+      sessionCount: latestWorkout.sessionCount ?? sortedSessions.length
+    } as const;
+  }, [sortedWorkouts]);
+
   const { totalWorkouts, totalSessions, upcomingSessions, lastWorkoutDate } = useMemo(() => {
     const sessionAccumulator = { total: 0, upcoming: 0 };
     const startOfToday = new Date();
@@ -634,14 +659,86 @@ export default function WorkoutsPage() {
               </div>
               <p>Selecione um treino e clique em “Registrar novo dia” para reaproveitar o planejamento.</p>
             </header>
-            <WorkoutHistoryByDate
-              classes={sortedWorkouts}
-              emptyLabel="Nenhum treino cadastrado."
-              onDuplicate={handleReuseWorkout}
-              onDelete={handleDeleteWorkout}
-              onEdit={handleEditWorkout}
-              deletingIds={deletingIds}
-            />
+            <div className={styles.historyPreviewContent}>
+              {featuredWorkoutSummary ? (
+                <aside className={styles.historySpotlight} aria-label="Resumo do último treino registrado">
+                  <div className={styles.historySpotlightHeader}>
+                    <span className={styles.historySpotlightTag}>Reaproveitamento em foco</span>
+                    <h4 className={styles.historySpotlightTitle}>{featuredWorkoutSummary.name}</h4>
+                    {featuredWorkoutSummary.focus ? (
+                      <span className={styles.historySpotlightFocus}>{featuredWorkoutSummary.focus}</span>
+                    ) : null}
+                  </div>
+                  <div className={styles.historySpotlightMetrics}>
+                    {featuredWorkoutSummary.formattedDate ? (
+                      <div className={styles.historySpotlightMetric}>
+                        <span className={styles.historySpotlightMetricLabel}>Último registro</span>
+                        <strong className={styles.historySpotlightMetricValue}>
+                          {featuredWorkoutSummary.formattedDate}
+                        </strong>
+                        <span className={styles.historySpotlightMetricHelper}>
+                          Dia mais recente concluído
+                        </span>
+                      </div>
+                    ) : null}
+                    {typeof featuredWorkoutSummary.sessionCount === 'number' ? (
+                      <div className={styles.historySpotlightMetric}>
+                        <span className={styles.historySpotlightMetricLabel}>Dias cadastrados</span>
+                        <strong className={styles.historySpotlightMetricValue}>
+                          {featuredWorkoutSummary.sessionCount}
+                        </strong>
+                        <span className={styles.historySpotlightMetricHelper}>
+                          {featuredWorkoutSummary.sessionCount === 1
+                            ? 'dia registrado no histórico'
+                            : 'dias registrados no histórico'}
+                        </span>
+                      </div>
+                    ) : null}
+                    {typeof featuredWorkoutSummary.exerciseCount === 'number' ? (
+                      <div className={styles.historySpotlightMetric}>
+                        <span className={styles.historySpotlightMetricLabel}>Exercícios no dia</span>
+                        <strong className={styles.historySpotlightMetricValue}>
+                          {featuredWorkoutSummary.exerciseCount}
+                        </strong>
+                        <span className={styles.historySpotlightMetricHelper}>
+                          {featuredWorkoutSummary.exerciseCount === 1
+                            ? 'exercício planejado'
+                            : 'exercícios planejados'}
+                        </span>
+                      </div>
+                    ) : null}
+                    {typeof featuredWorkoutSummary.totalSets === 'number' ? (
+                      <div className={styles.historySpotlightMetric}>
+                        <span className={styles.historySpotlightMetricLabel}>Séries registradas</span>
+                        <strong className={styles.historySpotlightMetricValue}>
+                          {featuredWorkoutSummary.totalSets}
+                        </strong>
+                        <span className={styles.historySpotlightMetricHelper}>
+                          {featuredWorkoutSummary.totalSets === 1
+                            ? 'série planejada para o dia'
+                            : 'séries planejadas para o dia'}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                </aside>
+              ) : (
+                <aside className={styles.historySpotlightEmpty}>
+                  <strong>Nenhum treino reaproveitado ainda</strong>
+                  <p>Cadastre o primeiro plano para acompanhar destaques aqui.</p>
+                </aside>
+              )}
+              <div className={styles.historyListShell}>
+                <WorkoutHistoryByDate
+                  classes={sortedWorkouts}
+                  emptyLabel="Nenhum treino cadastrado."
+                  onDuplicate={handleReuseWorkout}
+                  onDelete={handleDeleteWorkout}
+                  onEdit={handleEditWorkout}
+                  deletingIds={deletingIds}
+                />
+              </div>
+            </div>
           </section>
         </div>
       ) : null}
@@ -707,14 +804,16 @@ export default function WorkoutsPage() {
               </button>
             </div>
           </div>
-          <WorkoutHistoryByDate
-            classes={sortedWorkouts}
-            emptyLabel="Nenhum treino cadastrado."
-            onDuplicate={handleReuseWorkout}
-            onDelete={handleDeleteWorkout}
-            onEdit={handleEditWorkout}
-            deletingIds={deletingIds}
-          />
+          <div className={styles.historyListShell}>
+            <WorkoutHistoryByDate
+              classes={sortedWorkouts}
+              emptyLabel="Nenhum treino cadastrado."
+              onDuplicate={handleReuseWorkout}
+              onDelete={handleDeleteWorkout}
+              onEdit={handleEditWorkout}
+              deletingIds={deletingIds}
+            />
+          </div>
           {successMessage || error ? (
             <div className={styles.feedbackStack}>
               {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
