@@ -254,6 +254,7 @@ export interface MuscleGroupClass {
   name: string;
   description?: string;
   createdAt?: IsoDateString;
+  updatedAt?: IsoDateString;
 }
 
 export interface Session {
@@ -526,7 +527,8 @@ const createMuscleGroupClassConverter = (): FirestoreDataConverter<MuscleGroupCl
       id: snapshot.id,
       name: toStringOrUndefined(data.name) ?? 'Grupo muscular sem nome',
       description: toStringOrUndefined(data.description),
-      createdAt: toIsoDate(data.createdAt)
+      createdAt: toIsoDate(data.createdAt),
+      updatedAt: toIsoDate(data.updatedAt)
     } satisfies MuscleGroupClass;
   }
 });
@@ -921,14 +923,16 @@ export async function createMuscleGroupClass(
   const docRef = await addDoc(groupsCollection, {
     name,
     ...(description ? { description } : {}),
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
   });
 
   return {
     id: docRef.id,
     name,
     description: description ?? undefined,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   } satisfies MuscleGroupClass;
 }
 
