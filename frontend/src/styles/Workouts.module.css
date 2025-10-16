@@ -267,6 +267,7 @@
   opacity: 0.55;
   transform: rotate(6deg);
   z-index: 1;
+  pointer-events: none;
 }
 
 .previousWorkoutsPanel::after {
