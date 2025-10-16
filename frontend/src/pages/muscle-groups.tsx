@@ -143,52 +143,36 @@ export default function MuscleGroupsPage() {
       </Head>
       <div className={styles.page}>
         <section className={styles.formSection}>
-          <header className={styles.formHeader}>
-            <span className={styles.formEyebrow}>Novo cadastro</span>
-            <div className={styles.formTitleWrapper}>
-              <h3 className={styles.formTitle}>Adicionar grupo muscular</h3>
-              <p className={styles.formSubtitle}>Preencha os campos abaixo para registrar um grupo.</p>
-            </div>
-            <p className={styles.formDescription}>
-              Organize seus treinos mantendo um catálogo atualizado de grupos musculares. Informe
-              um nome claro e adicione observações importantes para o time.
-            </p>
+          <header className={styles.sectionHeader}>
+            <h2>Cadastre um grupo muscular</h2>
+            <p>Mantenha a biblioteca de treinos organizada com nomes claros e descrições objetivas.</p>
           </header>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.fieldGroup}>
               <label htmlFor="muscle-group-name">Nome *</label>
-              <p id="muscle-group-name-hint" className={styles.fieldHint}>
-                Utilize um nome objetivo. Ele aparecerá nos planos de treino e relatórios.
-              </p>
               <input
                 id="muscle-group-name"
                 value={formState.name}
                 onChange={handleChange('name')}
                 placeholder="Ex.: Peito, Costas, Quadríceps"
-                aria-describedby="muscle-group-name-hint"
                 required
               />
             </div>
             <div className={`${styles.fieldGroup} ${styles.fullWidth}`}>
               <label htmlFor="muscle-group-description">Descrição</label>
-              <p id="muscle-group-description-hint" className={styles.fieldHint}>
-                Compartilhe detalhes úteis para a equipe, como exercícios sugeridos ou alertas.
-              </p>
               <textarea
                 id="muscle-group-description"
                 value={formState.description}
                 onChange={handleChange('description')}
-                placeholder="Observações sobre exercícios relacionados, variações, etc."
-                aria-describedby="muscle-group-description-hint"
+                placeholder="Detalhes opcionais para orientar o time"
                 rows={3}
               />
             </div>
-            <footer className={`${styles.actions} ${styles.fullWidth}`}>
+            <div className={`${styles.actions} ${styles.fullWidth}`}>
               <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Salvando...' : 'Cadastrar grupo'}
+                {isSubmitting ? 'Salvando...' : 'Adicionar grupo'}
               </button>
-              <span className={styles.actionsHint}>Campos obrigatórios estão sinalizados com “*”.</span>
-            </footer>
+            </div>
           </form>
           {successMessage ? (
             <p className={`${styles.statusMessage} ${styles.success}`} role="status" aria-live="polite">
@@ -203,27 +187,12 @@ export default function MuscleGroupsPage() {
         </section>
 
         <section className={styles.listSection}>
-          <header className={styles.listHeader}>
-            <div className={styles.listHeaderContent}>
-              <span className={styles.listEyebrow}>Grupos cadastrados</span>
-              <h3>Gerencie sua base de conhecimento</h3>
-              <p>
-                Revise, atualize ou remova rapidamente os grupos musculares para manter o material
-                de treino alinhado.
-              </p>
+          <header className={styles.sectionHeader}>
+            <div>
+              <h2>Grupos cadastrados</h2>
+              <p>Revise ou remova grupos existentes sempre que necessário.</p>
             </div>
-            <dl className={styles.listStats}>
-              <div>
-                <dt>Total ativos</dt>
-                <dd>{groups.length}</dd>
-              </div>
-              <div>
-                <dt>Atualizado em</dt>
-                <dd>
-                  {formatDate(groups.length > 0 ? groups[0]?.updatedAt ?? groups[0]?.createdAt : undefined)}
-                </dd>
-              </div>
-            </dl>
+            <span className={styles.countBadge}>{groups.length}</span>
           </header>
           <ResourceList
             items={groups}
@@ -231,35 +200,21 @@ export default function MuscleGroupsPage() {
             renderItem={(group) => (
               <article className={styles.card}>
                 <header className={styles.cardHeader}>
-                  <div>
-                    <span className={styles.cardEyebrow}>Grupo muscular</span>
-                    <h4>{group.name}</h4>
-                  </div>
-                  <time className={styles.cardMeta}>{formatDate(group.updatedAt ?? group.createdAt)}</time>
+                  <h3>{group.name}</h3>
+                  <time dateTime={group.updatedAt ?? group.createdAt}>
+                    Atualizado {formatDate(group.updatedAt ?? group.createdAt)}
+                  </time>
                 </header>
-                <div className={styles.cardBody}>
-                  {group.description ? (
-                    <p className={styles.cardDescription}>{group.description}</p>
-                  ) : (
-                    <p className={`${styles.cardDescription} ${styles.cardDescriptionMuted}`}>
-                      Nenhuma descrição adicional cadastrada.
-                    </p>
-                  )}
-                  <dl className={styles.cardMetaList}>
-                    <div>
-                      <dt>Criado em</dt>
-                      <dd>{formatDate(group.createdAt)}</dd>
-                    </div>
-                    <div>
-                      <dt>Atualizado em</dt>
-                      <dd>{formatDate(group.updatedAt)}</dd>
-                    </div>
-                  </dl>
-                </div>
-                <footer className={styles.cardActions}>
+                {group.description ? (
+                  <p className={styles.cardDescription}>{group.description}</p>
+                ) : (
+                  <p className={`${styles.cardDescription} ${styles.muted}`}>
+                    Nenhuma descrição informada.
+                  </p>
+                )}
+                <footer className={styles.cardFooter}>
                   <button
                     type="button"
-                    className={styles.deleteButton}
                     onClick={() => handleDeleteGroup(group)}
                     disabled={deletingIds.has(group.id)}
                   >
