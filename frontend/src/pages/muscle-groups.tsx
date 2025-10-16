@@ -134,6 +134,14 @@ export default function MuscleGroupsPage() {
         <title>Onemorerep - Grupos musculares</title>
       </Head>
       <section className={styles.formSection}>
+        <div className={styles.formHeader}>
+          <span className={styles.formEyebrow}>Novo cadastro</span>
+          <h3 className={styles.formTitle}>Adicionar grupo muscular</h3>
+          <p className={styles.formDescription}>
+            Organize seus treinos mantendo um catálogo atualizado de grupos musculares. Informe um
+            nome claro e adicione observações importantes para o time.
+          </p>
+        </div>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.fieldGroup}>
             <label htmlFor="muscle-group-name">Nome *</label>
@@ -145,7 +153,7 @@ export default function MuscleGroupsPage() {
               required
             />
           </div>
-          <div className={styles.fieldGroup}>
+          <div className={`${styles.fieldGroup} ${styles.fullWidth}`}>
             <label htmlFor="muscle-group-description">Descrição</label>
             <textarea
               id="muscle-group-description"
@@ -155,27 +163,54 @@ export default function MuscleGroupsPage() {
               rows={3}
             />
           </div>
-          <div className={styles.actions}>
+          <div className={`${styles.actions} ${styles.fullWidth}`}>
             <button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Salvando...' : 'Cadastrar grupo'}
             </button>
           </div>
         </form>
-        {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
-        {error ? <p className={styles.error}>{error}</p> : null}
+        {successMessage ? (
+          <p className={`${styles.statusMessage} ${styles.success}`} role="status" aria-live="polite">
+            {successMessage}
+          </p>
+        ) : null}
+        {error ? (
+          <p className={`${styles.statusMessage} ${styles.error}`} role="alert" aria-live="assertive">
+            {error}
+          </p>
+        ) : null}
       </section>
 
-      <section>
+      <section className={styles.listSection}>
+        <header className={styles.listHeader}>
+          <div>
+            <span className={styles.listEyebrow}>Grupos cadastrados</span>
+            <h3>Gerencie sua base de conhecimento</h3>
+            <p>
+              Revise, atualize ou remova rapidamente os grupos musculares para manter o material de
+              treino alinhado.
+            </p>
+          </div>
+        </header>
         <ResourceList
           items={groups}
           emptyLabel="Nenhum grupo muscular cadastrado."
           renderItem={(group) => (
             <article className={styles.card}>
               <header className={styles.cardHeader}>
-                <h3>{group.name}</h3>
-                <time>{formatDate(group.createdAt)}</time>
+                <div>
+                  <span className={styles.cardEyebrow}>Grupo muscular</span>
+                  <h4>{group.name}</h4>
+                </div>
+                <time className={styles.cardMeta}>{formatDate(group.createdAt)}</time>
               </header>
-              {group.description ? <p className={styles.cardDescription}>{group.description}</p> : null}
+              {group.description ? (
+                <p className={styles.cardDescription}>{group.description}</p>
+              ) : (
+                <p className={`${styles.cardDescription} ${styles.cardDescriptionMuted}`}>
+                  Nenhuma descrição adicional cadastrada.
+                </p>
+              )}
               <div className={styles.cardActions}>
                 <button
                   type="button"
