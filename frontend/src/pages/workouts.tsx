@@ -68,6 +68,20 @@ const sortSessionsByDate = (sessions: WorkoutSession[]): WorkoutSession[] => {
   });
 };
 
+const toDate = (value?: string): Date | null => {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.includes('T') ? value : `${value}T00:00:00`;
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+};
+
 const mergeWorkoutSessions = (
   previous: WorkoutClass | undefined,
   incoming: WorkoutClass
@@ -189,6 +203,76 @@ export default function WorkoutsPage() {
 
     return sortedWorkouts.find((item) => item.id === selectedExistingId) ?? null;
   }, [sortedWorkouts, selectedExistingId]);
+
+  const featuredWorkoutSummary = useMemo(() => {
+    if (sortedWorkouts.length === 0) {
+      return null;
+    }
+
+    const latestWorkout = sortedWorkouts[0];
+    const sortedSessions = sortSessionsByDate(latestWorkout.sessions ?? []);
+    const latestSession = sortedSessions[0];
+    const highlightDate =
+      latestSession?.scheduledFor ??
+      latestWorkout.lastSessionOn ??
+      latestWorkout.scheduledFor ??
+      latestWorkout.updatedAt ??
+      latestWorkout.createdAt;
+
+    return {
+      name: latestWorkout.name,
+      focus: latestWorkout.focus ?? null,
+      formattedDate: highlightDate ? formatScheduleForMessage(highlightDate) : null,
+      exerciseCount: latestSession?.exerciseCount ?? latestWorkout.exerciseCount ?? null,
+      totalSets: latestSession?.totalSets ?? latestWorkout.totalSets ?? null,
+      sessionCount: latestWorkout.sessionCount ?? sortedSessions.length
+    } as const;
+  }, [sortedWorkouts]);
+
+  const { totalWorkouts, totalSessions, upcomingSessions, lastWorkoutDate } = useMemo(() => {
+    const sessionAccumulator = { total: 0, upcoming: 0 };
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    for (const workout of sortedWorkouts) {
+      const sessionCount =
+        typeof workout.sessionCount === 'number'
+          ? workout.sessionCount
+          : workout.sessions?.length ?? 0;
+      sessionAccumulator.total += sessionCount;
+
+      const sessions = workout.sessions ?? [];
+      for (const session of sessions) {
+        const scheduledDate = toDate(session.scheduledFor ?? session.updatedAt ?? session.createdAt);
+        if (scheduledDate && scheduledDate >= startOfToday) {
+          sessionAccumulator.upcoming += 1;
+        }
+      }
+
+      if (sessions.length === 0) {
+        const fallbackDate =
+          toDate(workout.scheduledFor ?? workout.updatedAt ?? workout.createdAt);
+        if (fallbackDate && fallbackDate >= startOfToday) {
+          sessionAccumulator.upcoming += 1;
+        }
+      }
+    }
+
+    const reference = sortedWorkouts.find((item) =>
+      Boolean(item.lastSessionOn || item.scheduledFor || item.updatedAt || item.createdAt)
+    );
+
+    const latestDateString = reference
+      ? reference.lastSessionOn ?? reference.scheduledFor ?? reference.updatedAt ?? reference.createdAt
+      : null;
+
+    return {
+      totalWorkouts: sortedWorkouts.length,
+      totalSessions: sessionAccumulator.total,
+      upcomingSessions: sessionAccumulator.upcoming,
+      lastWorkoutDate: latestDateString ? formatScheduleForMessage(latestDateString) : null
+    };
+  }, [sortedWorkouts]);
 
   useEffect(() => {
     let isMounted = true;
@@ -453,6 +537,47 @@ export default function WorkoutsPage() {
       <Head>
         <title>Onemorerep - Treinos</title>
       </Head>
+      <section className={styles.pageIntro}>
+        <div className={styles.introContent}>
+          <span className={styles.introTag}>Gestão diária</span>
+          <h1>Treinos organizados, evolução clara</h1>
+          <p className={styles.introDescription}>
+            Planeje as sessões da semana, registre cargas e acompanhe o progresso da sua equipe ou
+            dos alunos com uma visão centralizada.
+          </p>
+          <p className={styles.lastWorkout}>
+            {lastWorkoutDate ? (
+              <>
+                Último registro concluído em <strong>{lastWorkoutDate}</strong>.
+              </>
+            ) : (
+              <>Ainda não há registros cadastrados — comece adicionando o primeiro treino.</>
+            )}
+          </p>
+        </div>
+        <div className={styles.introStats}>
+          <article className={styles.statCard}>
+            <span className={styles.statLabel}>Treinos na biblioteca</span>
+            <strong className={styles.statValue}>{totalWorkouts}</strong>
+            <span className={styles.statHelper}>planos disponíveis</span>
+          </article>
+          <article className={styles.statCard}>
+            <span className={styles.statLabel}>Dias registrados</span>
+            <strong className={styles.statValue}>{totalSessions}</strong>
+            <span className={styles.statHelper}>com histórico completo</span>
+          </article>
+          <article className={styles.statCard}>
+            <span className={styles.statLabel}>Sessões agendadas</span>
+            <strong className={styles.statValue}>{upcomingSessions}</strong>
+            <span className={styles.statHelper}>a partir de hoje</span>
+          </article>
+          <article className={styles.statCard}>
+            <span className={styles.statLabel}>Exercícios cadastrados</span>
+            <strong className={styles.statValue}>{exercises.length}</strong>
+            <span className={styles.statHelper}>disponíveis para montar treinos</span>
+          </article>
+        </div>
+      </section>
       <section className={styles.modeSection}>
         <div className={styles.modeHeader}>
           <h3>Como deseja registrar o treino de hoje?</h3>
@@ -463,50 +588,170 @@ export default function WorkoutsPage() {
             type="button"
             role="tab"
             aria-selected={mode === 'new'}
-            className={mode === 'new' ? `${styles.modeButton} ${styles.modeButtonActive}` : styles.modeButton}
+            className={
+              mode === 'new' ? `${styles.modeButton} ${styles.modeButtonActive}` : styles.modeButton
+            }
             onClick={() => handleSelectMode('new')}
           >
-            Cadastrar novo treino
+            <span className={styles.modeButtonTitle}>Cadastro guiado</span>
+            <span className={styles.modeButtonSubtitle}>
+              Monte um treino do zero com exercícios e cargas atualizadas.
+            </span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={mode === 'existing'}
-            className={mode === 'existing' ? `${styles.modeButton} ${styles.modeButtonActive}` : styles.modeButton}
+            className={
+              mode === 'existing'
+                ? `${styles.modeButton} ${styles.modeButtonActive}`
+                : styles.modeButton
+            }
             onClick={() => handleSelectMode('existing')}
           >
-            Seguir treino existente
+            <span className={styles.modeButtonTitle}>Reaproveitar planejamento</span>
+            <span className={styles.modeButtonSubtitle}>
+              Escolha um treino salvo e registre um novo dia em minutos.
+            </span>
           </button>
         </div>
       </section>
 
       {mode === 'new' ? (
-        <section className={styles.formSection}>
-          <WorkoutClassForm
-            onSubmit={handleCreateWorkout}
-            isSubmitting={isSubmitting}
-            muscleGroups={muscleGroups}
-            muscleGroupError={muscleGroupError}
-            exercises={exercises}
-            exerciseError={exerciseError}
-            onRegisterExercise={handleRegisterExercise}
-            onUpdateExercise={handleUpdateExercise}
-            onDeleteExercise={handleDeleteExerciseFromLibrary}
-            prefillRequest={prefillRequest}
-            onClearPrefill={handleClearPrefill}
-          />
-          {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
-          {error ? <p className={styles.error}>{error}</p> : null}
-        </section>
+        <div className={styles.newModeGrid}>
+          <section className={`${styles.formSection} ${styles.primaryPanel} ${styles.newWorkoutPanel}`}>
+            <header className={styles.formHeader}>
+              <div>
+                <span className={styles.sectionEyebrow}>Novo planejamento</span>
+                <h2>Monte o treino do dia</h2>
+              </div>
+              <p>
+                Adicione exercícios com séries, repetições e cargas recomendadas para guiar o aluno com
+                clareza durante a sessão.
+              </p>
+            </header>
+            <WorkoutClassForm
+              onSubmit={handleCreateWorkout}
+              isSubmitting={isSubmitting}
+              muscleGroups={muscleGroups}
+              muscleGroupError={muscleGroupError}
+              exercises={exercises}
+              exerciseError={exerciseError}
+              onRegisterExercise={handleRegisterExercise}
+              onUpdateExercise={handleUpdateExercise}
+              onDeleteExercise={handleDeleteExerciseFromLibrary}
+              prefillRequest={prefillRequest}
+              onClearPrefill={handleClearPrefill}
+            />
+            {successMessage || error ? (
+              <div className={styles.feedbackStack}>
+                {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
+                {error ? <p className={styles.error}>{error}</p> : null}
+              </div>
+            ) : null}
+          </section>
+
+          <section className={`${styles.historyPreview} ${styles.secondaryPanel} ${styles.previousWorkoutsPanel}`}>
+            <header className={styles.historyHeader}>
+              <div>
+                <span className={styles.sectionEyebrow}>Histórico rápido</span>
+                <h3>Treinos anteriores</h3>
+              </div>
+              <p>Selecione um treino e clique em “Registrar novo dia” para reaproveitar o planejamento.</p>
+            </header>
+            <div className={styles.historyPreviewContent}>
+              {featuredWorkoutSummary ? (
+                <aside className={styles.historySpotlight} aria-label="Resumo do último treino registrado">
+                  <div className={styles.historySpotlightHeader}>
+                    <span className={styles.historySpotlightTag}>Reaproveitamento em foco</span>
+                    <h4 className={styles.historySpotlightTitle}>{featuredWorkoutSummary.name}</h4>
+                    {featuredWorkoutSummary.focus ? (
+                      <span className={styles.historySpotlightFocus}>{featuredWorkoutSummary.focus}</span>
+                    ) : null}
+                  </div>
+                  <div className={styles.historySpotlightMetrics}>
+                    {featuredWorkoutSummary.formattedDate ? (
+                      <div className={styles.historySpotlightMetric}>
+                        <span className={styles.historySpotlightMetricLabel}>Último registro</span>
+                        <strong className={styles.historySpotlightMetricValue}>
+                          {featuredWorkoutSummary.formattedDate}
+                        </strong>
+                        <span className={styles.historySpotlightMetricHelper}>
+                          Dia mais recente concluído
+                        </span>
+                      </div>
+                    ) : null}
+                    {typeof featuredWorkoutSummary.sessionCount === 'number' ? (
+                      <div className={styles.historySpotlightMetric}>
+                        <span className={styles.historySpotlightMetricLabel}>Dias cadastrados</span>
+                        <strong className={styles.historySpotlightMetricValue}>
+                          {featuredWorkoutSummary.sessionCount}
+                        </strong>
+                        <span className={styles.historySpotlightMetricHelper}>
+                          {featuredWorkoutSummary.sessionCount === 1
+                            ? 'dia registrado no histórico'
+                            : 'dias registrados no histórico'}
+                        </span>
+                      </div>
+                    ) : null}
+                    {typeof featuredWorkoutSummary.exerciseCount === 'number' ? (
+                      <div className={styles.historySpotlightMetric}>
+                        <span className={styles.historySpotlightMetricLabel}>Exercícios no dia</span>
+                        <strong className={styles.historySpotlightMetricValue}>
+                          {featuredWorkoutSummary.exerciseCount}
+                        </strong>
+                        <span className={styles.historySpotlightMetricHelper}>
+                          {featuredWorkoutSummary.exerciseCount === 1
+                            ? 'exercício planejado'
+                            : 'exercícios planejados'}
+                        </span>
+                      </div>
+                    ) : null}
+                    {typeof featuredWorkoutSummary.totalSets === 'number' ? (
+                      <div className={styles.historySpotlightMetric}>
+                        <span className={styles.historySpotlightMetricLabel}>Séries registradas</span>
+                        <strong className={styles.historySpotlightMetricValue}>
+                          {featuredWorkoutSummary.totalSets}
+                        </strong>
+                        <span className={styles.historySpotlightMetricHelper}>
+                          {featuredWorkoutSummary.totalSets === 1
+                            ? 'série planejada para o dia'
+                            : 'séries planejadas para o dia'}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                </aside>
+              ) : (
+                <aside className={styles.historySpotlightEmpty}>
+                  <strong>Nenhum treino reaproveitado ainda</strong>
+                  <p>Cadastre o primeiro plano para acompanhar destaques aqui.</p>
+                </aside>
+              )}
+              <div className={styles.historyListShell}>
+                <WorkoutHistoryByDate
+                  classes={sortedWorkouts}
+                  emptyLabel="Nenhum treino cadastrado."
+                  onDuplicate={handleReuseWorkout}
+                  onDelete={handleDeleteWorkout}
+                  onEdit={handleEditWorkout}
+                  deletingIds={deletingIds}
+                />
+              </div>
+            </div>
+          </section>
+        </div>
       ) : null}
 
       {mode === 'existing' ? (
-        <section className={styles.historySection}>
+        <section className={`${styles.historySection} ${styles.primaryPanel} ${styles.libraryPanel}`}>
           <header className={styles.historyHeader}>
-            <h3>Escolha um treino já cadastrado</h3>
+            <div>
+              <span className={styles.sectionEyebrow}>Biblioteca de treinos</span>
+              <h3>Escolha um treino já cadastrado</h3>
+            </div>
             <p>
-              Clique em “Registrar novo dia” para carregar o treino selecionado no formulário e atualizar as cargas
-              conforme necessário.
+              Carregue um treino existente para atualizar as cargas e registrar um novo dia sem perder o histórico.
             </p>
           </header>
           <div className={styles.existingSelector}>
@@ -559,33 +804,22 @@ export default function WorkoutsPage() {
               </button>
             </div>
           </div>
-          <WorkoutHistoryByDate
-            classes={sortedWorkouts}
-            emptyLabel="Nenhum treino cadastrado."
-            onDuplicate={handleReuseWorkout}
-            onDelete={handleDeleteWorkout}
-            onEdit={handleEditWorkout}
-            deletingIds={deletingIds}
-          />
-          {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
-          {error ? <p className={styles.error}>{error}</p> : null}
-        </section>
-      ) : null}
-
-      {mode === 'new' ? (
-        <section className={styles.historyPreview}>
-          <header className={styles.historyHeader}>
-            <h3>Treinos anteriores</h3>
-            <p>Precisa repetir um treino? Escolha abaixo e toque em “Registrar novo dia”.</p>
-          </header>
-          <WorkoutHistoryByDate
-            classes={sortedWorkouts}
-            emptyLabel="Nenhum treino cadastrado."
-            onDuplicate={handleReuseWorkout}
-            onDelete={handleDeleteWorkout}
-            onEdit={handleEditWorkout}
-            deletingIds={deletingIds}
-          />
+          <div className={styles.historyListShell}>
+            <WorkoutHistoryByDate
+              classes={sortedWorkouts}
+              emptyLabel="Nenhum treino cadastrado."
+              onDuplicate={handleReuseWorkout}
+              onDelete={handleDeleteWorkout}
+              onEdit={handleEditWorkout}
+              deletingIds={deletingIds}
+            />
+          </div>
+          {successMessage || error ? (
+            <div className={styles.feedbackStack}>
+              {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
+              {error ? <p className={styles.error}>{error}</p> : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
     </Layout>

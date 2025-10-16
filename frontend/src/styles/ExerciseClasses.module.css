@@ -1,34 +1,84 @@
 .error {
-  background: #fee2e2;
+  background: rgba(254, 226, 226, 0.9);
   color: #991b1b;
-  border: 1px solid #fecaca;
+  border: 1px solid rgba(254, 202, 202, 0.9);
   padding: 1rem 1.5rem;
-  border-radius: 10px;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(185, 28, 28, 0.12);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .cardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  gap: 1.25rem;
 }
 
-.cardHeader h3 {
-  font-size: 1.25rem;
+.cardTitle {
+  margin: 0;
+  font-size: 1.3rem;
 }
 
-.cardHeader time {
+.cardMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--color-text-muted);
+}
+
+.cardBadge {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(37, 99, 235, 0.2));
+  color: #312e81;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.cardDescription {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.65;
 }
 
 .cardFooter {
-  margin-top: 1rem;
-  display: flex;
-  gap: 1.5rem;
-  color: #4b5563;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
 }
 
-.cardFooter span strong {
-  color: #111827;
+.metaItem {
+  background: rgba(79, 70, 229, 0.08);
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid rgba(79, 70, 229, 0.16);
+}
+
+.metaLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.metaValue {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #312e81;
+  word-break: break-word;
 }

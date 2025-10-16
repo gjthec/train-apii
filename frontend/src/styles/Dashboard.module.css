@@ -1,13 +1,13 @@
 .pageSection {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(1.75rem, 3vw, 2.5rem);
 }
 
 .sectionHeader {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.9rem;
 }
 
 .filterRow {
@@ -19,70 +19,78 @@
 
 .filterRow label {
   font-weight: 600;
-  color: #1f2933;
+  color: #1e1b4b;
 }
 
 .selectInput {
   min-width: 240px;
-  padding: 8px 12px;
-  border: 1px solid #d2d6dc;
-  border-radius: 8px;
-  background-color: #fff;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.95);
   color: #1f2933;
   font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.selectInput:focus {
+  outline: none;
+  border-color: rgba(79, 70, 229, 0.65);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.18);
 }
 
 .overviewCard {
-  background-color: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.65));
+  border-radius: 26px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  padding: clamp(1.35rem, 3vw, 2rem);
+  box-shadow: 0 26px 52px rgba(15, 23, 42, 0.16);
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .overviewTitle {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: #111827;
+  color: #1e1b4b;
 }
 
 .overviewMeta {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 0.95rem;
 }
 
 .progressGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
+  gap: clamp(1.75rem, 3vw, 2.5rem);
 }
 
 .progressCard {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  background-color: #fff;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  gap: 1.5rem;
+  padding: clamp(1.5rem, 3vw, 2.1rem);
+  border-radius: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(240, 249, 255, 0.7));
+  box-shadow: 0 30px 58px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(6px);
 }
 
 .progressHeader h3 {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   margin: 0;
-  color: #0f172a;
+  color: #1e1b4b;
 }
 
 .progressSubtitle {
   margin: 0;
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 0.95rem;
 }
 
@@ -109,14 +117,14 @@
 
 .metricTitle {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #1e1b4b;
 }
 
 .metricDescription {
   margin: 0;
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 

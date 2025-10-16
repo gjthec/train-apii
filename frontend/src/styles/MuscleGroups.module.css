@@ -1,19 +1,32 @@
 .formSection {
   margin-bottom: 2rem;
-  padding: 1.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 18px 45px -25px rgba(15, 23, 42, 0.3);
+  padding: clamp(1.75rem, 3vw, 2.5rem);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(224, 231, 255, 0.68));
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.16);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.formSection::before {
+  content: '';
+  position: absolute;
+  inset: -60% auto auto -30%;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.16), transparent 65%);
+  opacity: 0.7;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  position: relative;
 }
 
 .fieldGroup {
@@ -29,12 +42,13 @@
 
 .fieldGroup input,
 .fieldGroup textarea {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
   font-size: 1rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   font-family: inherit;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .fieldGroup textarea {
@@ -45,8 +59,9 @@
 .fieldGroup input:focus,
 .fieldGroup textarea:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  border-color: rgba(79, 70, 229, 0.6);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.18);
+  transform: translateY(-1px);
 }
 
 .actions {
@@ -55,55 +70,75 @@
 }
 
 .actions button {
-  background: #2563eb;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(79, 70, 229, 0.9));
   color: #ffffff;
   border: none;
   border-radius: 999px;
-  padding: 0.75rem 1.75rem;
+  padding: 0.85rem 1.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 18px 35px rgba(37, 99, 235, 0.25);
 }
 
 .actions button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .actions button:not(:disabled):hover {
-  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 24px 45px rgba(37, 99, 235, 0.3);
 }
 
 .actions button:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .success {
   margin: 0;
-  background: #dcfce7;
+  background: rgba(220, 252, 231, 0.92);
   color: #166534;
-  border: 1px solid #bbf7d0;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border: 1px solid rgba(187, 247, 208, 0.9);
+  padding: 0.85rem 1.1rem;
+  border-radius: 16px;
+  box-shadow: 0 12px 24px rgba(22, 101, 52, 0.12);
 }
 
 .error {
   margin: 0;
-  background: #fee2e2;
+  background: rgba(254, 226, 226, 0.92);
   color: #991b1b;
-  border: 1px solid #fecaca;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border: 1px solid rgba(254, 202, 202, 0.9);
+  padding: 0.85rem 1.1rem;
+  border-radius: 16px;
+  box-shadow: 0 12px 24px rgba(185, 28, 28, 0.12);
 }
 
 .card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  background: #f9fafb;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 24px;
+  padding: clamp(1.5rem, 3vw, 2rem);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.7));
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.14);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: auto -20% -60% auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.14), transparent 65%);
+  opacity: 0.8;
+  z-index: 0;
 }
 
 .cardHeader {
@@ -111,12 +146,14 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .cardHeader h3 {
   margin: 0;
   font-size: 1.1rem;
-  color: #111827;
+  color: #1e1b4b;
 }
 
 .cardHeader time {
@@ -126,40 +163,48 @@
 
 .cardDescription {
   margin: 0;
-  color: #374151;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
 }
 
 .cardActions {
   display: flex;
   justify-content: flex-end;
+  position: relative;
+  z-index: 1;
 }
 
 .deleteButton {
-  border: 1px solid #fca5a5;
-  background: #fef2f2;
+  border: 1px solid rgba(248, 113, 113, 0.6);
+  background: linear-gradient(135deg, rgba(254, 226, 226, 0.8), rgba(254, 202, 202, 0.75));
   color: #b91c1c;
   border-radius: 999px;
-  padding: 0.5rem 1.25rem;
+  padding: 0.6rem 1.45rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 26px rgba(248, 113, 113, 0.3);
 }
 
 .deleteButton:not(:disabled):hover {
-  background: #fee2e2;
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px rgba(248, 113, 113, 0.35);
 }
 
 .deleteButton:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .deleteButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 @media (max-width: 640px) {
   .formSection {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
 }

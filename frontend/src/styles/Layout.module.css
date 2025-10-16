@@ -1,11 +1,11 @@
 .appShell {
   display: grid;
-  grid-template-columns: clamp(240px, 22vw, 300px) minmax(0, 1fr);
+  grid-template-columns: clamp(220px, 18vw, 270px) minmax(0, 1fr);
   min-height: 100vh;
   transition: grid-template-columns 0.3s ease;
   position: relative;
-  gap: clamp(1.5rem, 3vw, 2.75rem);
-  padding: clamp(1.5rem, 3vw, 2.5rem);
+  gap: clamp(0.75rem, 1.6vw, 1.3rem);
+  padding: clamp(0.75rem, 1.8vw, 1.4rem);
 }
 
 .appShellCollapsed {
@@ -186,11 +186,13 @@
 }
 
 .contentArea {
-  padding: clamp(2rem, 5vw, 4rem) clamp(1.5rem, 5vw, 5rem);
+  padding: clamp(1.4rem, 3vw, 2.5rem) clamp(0.85rem, 2.4vw, 2.1rem);
   background: transparent;
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 4vw, 2.75rem);
+  gap: clamp(1.5rem, 3.5vw, 2.5rem);
+  width: min(100%, 1360px);
+  margin: 0 auto;
 }
 
 .contentAreaCollapsed {
@@ -234,18 +236,29 @@
 .pageBody {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: clamp(1.2rem, 2.5vw, 2rem);
   background: var(--color-surface-strong);
   border-radius: 34px;
-  padding: clamp(1.75rem, 3vw, 2.75rem);
+  padding: clamp(1.35rem, 2.2vw, 2rem);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-elevated);
   backdrop-filter: blur(8px);
 }
 
+@media (max-width: 1400px) {
+  .appShell {
+    grid-template-columns: clamp(200px, 20vw, 240px) minmax(0, 1fr);
+  }
+
+  .contentArea {
+    padding-inline: clamp(0.75rem, 2vw, 1.6rem);
+  }
+}
+
 @media (max-width: 1200px) {
   .appShell {
-    grid-template-columns: clamp(220px, 30vw, 260px) minmax(0, 1fr);
+    grid-template-columns: clamp(180px, 28vw, 220px) minmax(0, 1fr);
+    padding: clamp(0.85rem, 2.4vw, 1.35rem);
   }
 }
 
