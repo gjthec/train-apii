@@ -133,6 +133,9 @@ export default function MuscleGroupsPage() {
     }
   };
 
+  const totalGroups = groups.length;
+  const totalGroupsLabel = `${totalGroups} ${totalGroups === 1 ? 'grupo' : 'grupos'}`;
+
   return (
     <Layout
       title="Grupos musculares"
@@ -144,8 +147,10 @@ export default function MuscleGroupsPage() {
       <div className={styles.page}>
         <section className={styles.formSection}>
           <header className={styles.sectionHeader}>
-            <h2>Cadastre um grupo muscular</h2>
-            <p>Mantenha a biblioteca de treinos organizada com nomes claros e descrições objetivas.</p>
+            <div>
+              <h2>Adicionar grupo</h2>
+              <p>Nomeie os grupos usados nos treinos com clareza e consistência.</p>
+            </div>
           </header>
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.fieldGroup}>
@@ -169,8 +174,8 @@ export default function MuscleGroupsPage() {
               />
             </div>
             <div className={`${styles.actions} ${styles.fullWidth}`}>
-              <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Salvando...' : 'Adicionar grupo'}
+              <button type="submit" className={styles.primaryButton} disabled={isSubmitting}>
+                {isSubmitting ? 'Salvando...' : 'Salvar grupo'}
               </button>
             </div>
           </form>
@@ -190,40 +195,48 @@ export default function MuscleGroupsPage() {
           <header className={styles.sectionHeader}>
             <div>
               <h2>Grupos cadastrados</h2>
-              <p>Revise ou remova grupos existentes sempre que necessário.</p>
+              <p>Revise rapidamente e mantenha a lista sempre atualizada.</p>
             </div>
-            <span className={styles.countBadge}>{groups.length}</span>
+            <span className={styles.countBadge} aria-label={`Total de ${totalGroupsLabel}`}>
+              {totalGroupsLabel}
+            </span>
           </header>
-          <ResourceList
-            items={groups}
-            emptyLabel="Nenhum grupo muscular cadastrado."
-            renderItem={(group) => (
-              <article className={styles.card}>
-                <header className={styles.cardHeader}>
-                  <h3>{group.name}</h3>
-                  <time dateTime={group.updatedAt ?? group.createdAt}>
-                    Atualizado {formatDate(group.updatedAt ?? group.createdAt)}
-                  </time>
-                </header>
-                {group.description ? (
-                  <p className={styles.cardDescription}>{group.description}</p>
-                ) : (
-                  <p className={`${styles.cardDescription} ${styles.muted}`}>
-                    Nenhuma descrição informada.
-                  </p>
-                )}
-                <footer className={styles.cardFooter}>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteGroup(group)}
-                    disabled={deletingIds.has(group.id)}
-                  >
-                    {deletingIds.has(group.id) ? 'Excluindo...' : 'Excluir'}
-                  </button>
-                </footer>
-              </article>
-            )}
-          />
+          <div className={styles.listContent}>
+            <ResourceList
+              items={groups}
+              emptyLabel="Nenhum grupo muscular cadastrado."
+              renderItem={(group) => {
+                const lastUpdated = group.updatedAt ?? group.createdAt;
+                return (
+                  <article className={styles.card}>
+                    <header className={styles.cardHeader}>
+                      <h3>{group.name}</h3>
+                      <time dateTime={lastUpdated}>
+                        Atualizado {formatDate(lastUpdated)}
+                      </time>
+                    </header>
+                    {group.description ? (
+                      <p className={styles.cardDescription}>{group.description}</p>
+                    ) : (
+                      <p className={`${styles.cardDescription} ${styles.muted}`}>
+                        Nenhuma descrição informada.
+                      </p>
+                    )}
+                    <footer className={styles.cardActions}>
+                      <button
+                        type="button"
+                        className={styles.deleteButton}
+                        onClick={() => handleDeleteGroup(group)}
+                        disabled={deletingIds.has(group.id)}
+                      >
+                        {deletingIds.has(group.id) ? 'Excluindo...' : 'Excluir'}
+                      </button>
+                    </footer>
+                  </article>
+                );
+              }}
+            />
+          </div>
         </section>
       </div>
     </Layout>
